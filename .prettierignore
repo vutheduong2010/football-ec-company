@@ -1,0 +1,5 @@
+dist
+coverage
+node_modules
+package-lock.json
+football-ec-company-v2-agent-plan.md

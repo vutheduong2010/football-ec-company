@@ -1,0 +1,15 @@
+project_id = "football-ec-company"
+
+[api]
+enabled = true
+schemas = ["public", "graphql_public"]
+extra_search_path = ["public", "extensions"]
+
+[db]
+major_version = 17
+
+[auth]
+enabled = true
+site_url = "https://vutheduong2010.github.io/football-ec-company/"
+additional_redirect_urls = ["http://127.0.0.1:5173", "http://localhost:5173"]
+enable_signup = false

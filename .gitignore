@@ -1,0 +1,15 @@
+node_modules
+dist
+coverage
+*.local
+.env
+.env.*
+!.env.example
+!.env.test
+.DS_Store
+*.tsbuildinfo
+.tmp-edge-*
+.tmp-tools/
+preview-*.png
+supabase/.temp/
+supabase/.branches/
