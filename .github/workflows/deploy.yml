@@ -31,7 +31,10 @@ jobs:
         run: npm ci
 
       - name: Validate
-        run: npm run format:check && npm run lint && npm test && npm run build
+        run: npm run format:check && npm run lint && npm test
+
+      - name: Build production
+        run: npm run build
         env:
           VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
