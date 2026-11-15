@@ -4,6 +4,7 @@ export type PositionGroup = 'GK' | 'DEF' | 'MID' | 'ATT'
 
 export const SEEDS: Seed[] = [1, 2, 3]
 export const POSITIONS: Position[] = ['GK', 'CB', 'LB', 'RB', 'CM', 'ST']
+export const MAX_SECONDARY_POSITIONS = 3
 
 export const POSITION_GROUPS: Record<Position, PositionGroup> = {
   GK: 'GK',

@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 
 import { PlayerFormDialog } from './PlayerFormDialog'
@@ -22,5 +23,24 @@ describe('PlayerFormDialog', () => {
     expect(primarySelect).toHaveTextContent('CM')
     expect(primarySelect).toHaveTextContent('ST')
     expect(primarySelect).not.toHaveTextContent('CAM')
+  })
+
+  it('cho phép chọn tối đa ba vị trí phụ', async () => {
+    const user = userEvent.setup()
+    render(
+      <PlayerFormDialog open player={null} isSaving={false} onClose={vi.fn()} onSubmit={vi.fn()} />,
+    )
+
+    await user.click(screen.getByRole('button', { name: 'GK' }))
+    await user.click(screen.getByRole('button', { name: 'CB' }))
+    await user.click(screen.getByRole('button', { name: 'LB' }))
+
+    expect(screen.getByRole('button', { name: 'GK' })).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.getByRole('button', { name: 'CB' })).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.getByRole('button', { name: 'LB' })).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.getByRole('button', { name: 'RB' })).toBeDisabled()
+
+    await user.click(screen.getByRole('button', { name: 'LB' }))
+    expect(screen.getByRole('button', { name: 'RB' })).toBeEnabled()
   })
 })

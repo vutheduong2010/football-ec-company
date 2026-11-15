@@ -8,7 +8,7 @@ const validInput: PlayerInput = {
   nickname: 'Test',
   seed: 1,
   primaryPosition: 'CM',
-  secondaryPositions: ['CB', 'ST'],
+  secondaryPositions: ['CB', 'ST', 'LB'],
   isActive: true,
 }
 
@@ -17,12 +17,12 @@ describe('playerValidation', () => {
     expect(validatePlayerInput(validInput)).toEqual({})
   })
 
-  it('chặn vị trí phụ trùng vị trí chính hoặc vượt quá hai', () => {
+  it('chặn vị trí phụ trùng vị trí chính hoặc vượt quá ba', () => {
     expect(
       validatePlayerInput({ ...validInput, secondaryPositions: ['CM'] }).secondaryPositions,
     ).toBeTruthy()
     expect(
-      validatePlayerInput({ ...validInput, secondaryPositions: ['CB', 'ST', 'LB'] })
+      validatePlayerInput({ ...validInput, secondaryPositions: ['CB', 'ST', 'LB', 'RB'] })
         .secondaryPositions,
     ).toBeTruthy()
   })

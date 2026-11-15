@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react
 
 import { Button } from '../../components/ui/Button'
 import {
+  MAX_SECONDARY_POSITIONS,
   POSITIONS,
   type Player,
   type PlayerInput,
@@ -80,7 +81,7 @@ export function PlayerFormDialog({
           secondaryPositions: current.secondaryPositions.filter((item) => item !== position),
         }
       }
-      if (current.secondaryPositions.length >= 2) return current
+      if (current.secondaryPositions.length >= MAX_SECONDARY_POSITIONS) return current
       return { ...current, secondaryPositions: [...current.secondaryPositions, position] }
     })
   }
@@ -233,12 +234,15 @@ export function PlayerFormDialog({
           </div>
 
           <fieldset>
-            <legend className="text-xs font-extrabold text-slate-300">Vị trí phụ — tối đa 2</legend>
+            <legend className="text-xs font-extrabold text-slate-300">
+              Vị trí phụ — tối đa {MAX_SECONDARY_POSITIONS}
+            </legend>
             <div className="mt-3 grid grid-cols-3 gap-2 sm:grid-cols-5">
               {POSITIONS.filter((position) => position !== input.primaryPosition).map(
                 (position) => {
                   const selected = input.secondaryPositions.includes(position)
-                  const disabled = !selected && input.secondaryPositions.length >= 2
+                  const disabled =
+                    !selected && input.secondaryPositions.length >= MAX_SECONDARY_POSITIONS
                   return (
                     <button
                       key={position}

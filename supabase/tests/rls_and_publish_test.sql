@@ -1,7 +1,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(22);
+select plan(24);
 
 insert into auth.users (
   id,
@@ -53,6 +53,15 @@ insert into public.players (
 ) values
   ('10000000-0000-4000-8000-000000000001', 'Test GK', null, 1, 'GK', '{}'),
   ('10000000-0000-4000-8000-000000000002', 'Test ST', 'Sát thủ', 3, 'ST', '{CM}');
+
+select ok(
+  private.valid_secondary_positions('CM', array['GK', 'CB', 'ST']),
+  'three unique secondary positions are allowed'
+);
+select ok(
+  not private.valid_secondary_positions('CM', array['GK', 'CB', 'LB', 'ST']),
+  'four secondary positions are rejected'
+);
 
 insert into public.draw_sessions (
   id,

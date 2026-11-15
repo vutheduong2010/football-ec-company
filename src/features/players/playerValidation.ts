@@ -1,4 +1,10 @@
-import { POSITIONS, SEEDS, type PlayerInput, type Position } from '../../types/player'
+import {
+  MAX_SECONDARY_POSITIONS,
+  POSITIONS,
+  SEEDS,
+  type PlayerInput,
+  type Position,
+} from '../../types/player'
 
 export type PlayerValidationErrors = Partial<
   Record<'name' | 'nickname' | 'seed' | 'primaryPosition' | 'secondaryPositions', string>
@@ -18,8 +24,8 @@ export function validatePlayerInput(input: PlayerInput): PlayerValidationErrors 
     errors.primaryPosition = 'Vị trí chính không hợp lệ.'
 
   const uniqueSecondary = new Set(input.secondaryPositions)
-  if (input.secondaryPositions.length > 2) {
-    errors.secondaryPositions = 'Chỉ được chọn tối đa 2 vị trí phụ.'
+  if (input.secondaryPositions.length > MAX_SECONDARY_POSITIONS) {
+    errors.secondaryPositions = `Chỉ được chọn tối đa ${MAX_SECONDARY_POSITIONS} vị trí phụ.`
   } else if (uniqueSecondary.size !== input.secondaryPositions.length) {
     errors.secondaryPositions = 'Vị trí phụ không được trùng nhau.'
   } else if (input.secondaryPositions.includes(input.primaryPosition)) {
