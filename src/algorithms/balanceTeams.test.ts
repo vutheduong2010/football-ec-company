@@ -190,6 +190,30 @@ describe('balanceTeams', () => {
     }
   })
 
+  it('ưu tiên đá chính theo thứ tự H1, H2 rồi H3', () => {
+    const players = makePlayers(24)
+    const playerById = new Map(players.map((player) => [player.id, player]))
+    const result = balanceTeams(
+      players,
+      players.map((player) => player.id),
+      2,
+      'starting-seed-priority',
+      { candidateCount: 100 },
+    )
+
+    for (const team of result.teams) {
+      const startingSeeds = team.startingPlayerIds.map(
+        (playerId) => playerById.get(playerId)?.seed ?? 3,
+      )
+      const reserveSeeds = team.reservePlayerIds.map(
+        (playerId) => playerById.get(playerId)?.seed ?? 1,
+      )
+
+      expect(startingSeeds).toEqual([...startingSeeds].sort((left, right) => left - right))
+      expect(Math.max(...startingSeeds)).toBeLessThanOrEqual(Math.min(...reserveSeeds))
+    }
+  })
+
   it('giữ invariant qua 1000 bộ dữ liệu ngẫu nhiên', () => {
     const random = createSeededRandom('property-cases-v1')
 
@@ -200,7 +224,7 @@ describe('balanceTeams', () => {
         const primaryPosition = POSITIONS[random.int(POSITIONS.length)]
         const secondaryPositions = random
           .shuffle(POSITIONS.filter((position) => position !== primaryPosition))
-          .slice(0, random.int(3))
+          .slice(0, random.int(4))
         return {
           id: `case-${caseIndex}-player-${index}`,
           seed: (random.int(3) + 1) as Seed,

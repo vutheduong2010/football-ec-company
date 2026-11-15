@@ -29,6 +29,12 @@ export function TeamPanel({
   const seedThree = players.filter((player) => player.seed === 3).length
   const startingSet = new Set(startingPlayerIds)
   const reserveCount = startingPlayerIds ? players.length - startingPlayerIds.length : 0
+  const orderedPlayers = startingPlayerIds
+    ? [...players].sort((left, right) => {
+        const startingRank = Number(!startingSet.has(left.id)) - Number(!startingSet.has(right.id))
+        return startingRank || left.seed - right.seed
+      })
+    : players
 
   return (
     <Card className={`overflow-hidden ${style.border}`}>
@@ -45,7 +51,7 @@ export function TeamPanel({
             {emptyMessage}
           </div>
         )}
-        {players.map((player) => (
+        {orderedPlayers.map((player) => (
           <div key={player.id} className="flex items-center gap-3 px-3 py-2.5">
             <PlayerAvatar className="size-8 rounded-lg ring-1 ring-white/10" />
             <span className="min-w-0 flex-1 truncate text-xs font-bold text-slate-200">

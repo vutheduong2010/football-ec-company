@@ -21,8 +21,12 @@ export function AppShell() {
 
       <aside className="fixed inset-y-0 left-0 z-30 hidden w-72 border-r border-white/7 bg-ink-950/90 px-5 py-6 backdrop-blur-xl lg:flex lg:flex-col">
         <NavLink to="/" className="flex items-center gap-3 rounded-xl focus-ring">
-          <span className="grid size-11 place-items-center rounded-xl bg-brand-400 text-ink-950 shadow-glow">
-            <img src={`${import.meta.env.BASE_URL}football.svg`} alt="" className="size-8" />
+          <span className="grid size-11 place-items-center rounded-xl bg-white/10 shadow-glow ring-1 ring-white/15">
+            <img
+              src={`${import.meta.env.BASE_URL}team-logo.png`}
+              alt=""
+              className="size-10 object-contain"
+            />
           </span>
           <span>
             <span className="block text-sm font-extrabold tracking-tight">Football EC</span>
@@ -86,9 +90,9 @@ export function AppShell() {
         <header className="sticky top-0 z-20 flex h-16 items-center justify-between border-b border-white/7 bg-ink-950/80 px-4 backdrop-blur-xl sm:px-6 lg:hidden">
           <NavLink to="/" className="flex items-center gap-2.5 rounded-lg focus-ring">
             <img
-              src={`${import.meta.env.BASE_URL}football.svg`}
+              src={`${import.meta.env.BASE_URL}team-logo.png`}
               alt=""
-              className="size-9 rounded-lg"
+              className="size-9 rounded-lg bg-white/10 object-contain p-0.5 ring-1 ring-white/15"
             />
             <span className="text-sm font-extrabold tracking-tight">Football EC</span>
           </NavLink>

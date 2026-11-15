@@ -2,7 +2,7 @@ import { createSeededRandom, type SeededRandom } from './seededRandom'
 import { scoreBalance, type QualityMetrics } from './scoreBalance'
 import { POSITION_GROUPS, type Player, type PositionGroup } from '../types/player'
 
-export const ALGORITHM_VERSION = 'balanced-candidates-v2'
+export const ALGORITHM_VERSION = 'balanced-candidates-v3'
 
 export type TeamCount = 2 | 3
 
@@ -135,45 +135,11 @@ function selectStartingSeven(team: readonly Player[], drawSeed: string, teamInde
   if (team.length <= 7) return team.map((player) => player.id)
 
   const random = createSeededRandom(`${drawSeed}|starting|${teamIndex}`)
-  const pool = random.shuffle(team)
-  const selected: Player[] = []
-  const selectedIds = new Set<string>()
-
-  const take = (group: PositionGroup, amount: number) => {
-    let taken = 0
-    const candidates = [
-      ...pool.filter((player) => player.positionGroup === group),
-      ...pool.filter(
-        (player) =>
-          player.positionGroup !== group &&
-          player.secondaryPositions.some((position) => POSITION_GROUPS[position] === group),
-      ),
-    ]
-
-    for (const player of candidates) {
-      if (taken >= amount) break
-      if (!selectedIds.has(player.id)) {
-        selected.push(player)
-        selectedIds.add(player.id)
-        taken += 1
-      }
-    }
-  }
-
-  take('GK', 1)
-  take('DEF', 2)
-  take('MID', 2)
-  take('ATT', 1)
-
-  for (const player of pool) {
-    if (selected.length >= 7) break
-    if (!selectedIds.has(player.id)) {
-      selected.push(player)
-      selectedIds.add(player.id)
-    }
-  }
-
-  return selected.map((player) => player.id)
+  return random
+    .shuffle(team)
+    .sort((left, right) => left.seed - right.seed)
+    .slice(0, 7)
+    .map((player) => player.id)
 }
 
 function buildWarnings(
