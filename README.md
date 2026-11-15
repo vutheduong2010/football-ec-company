@@ -11,10 +11,12 @@ Frontend là ứng dụng React tĩnh trên GitHub Pages. Supabase cung cấp Po
 - Danh sách cầu thủ với ba hạt giống: 1 mạnh, 2 trung bình, 3 yếu.
 - Sáu vị trí `GK`, `CB`, `LB`, `RB`, `CM`, `ST`; mỗi cầu thủ có một vị trí chính và tối đa ba vị trí phụ.
 - Khi một đội có hơn bảy người, suất đá chính được ưu tiên lần lượt cho H1, H2 rồi H3; cùng hạt giống vẫn được xáo trộn theo mã quay.
+- Sơ đồ sân 7 tối ưu toàn đội theo vị trí chính, sau đó vị trí phụ; vị trí phụ được snapshot cùng kết quả đã công bố.
 - Chia 2 hoặc 3 đội bằng PRNG deterministic, chọn trong nhiều phương án cân bằng.
 - Vòng quay tự động có pause/resume/skip và không làm đổi kết quả đã tính.
 - Publish session + assignments nguyên tử bằng PostgreSQL RPC.
 - Lịch sử public chỉ gồm phiên đã công bố, đội hình sân 7, dự bị và metrics.
+- Admin có thể xóa kết quả đã công bố qua RPC được bảo vệ; viewer nhìn thấy nút xóa ở trạng thái vô hiệu hóa.
 - Sơ đồ và kết quả ưu tiên biệt danh; nếu trống mới hiển thị tên cầu thủ.
 - Chia sẻ liên kết và xuất PNG sắc nét.
 - Một admin trong allow-list; viewer không cần đăng nhập và chỉ có quyền đọc.

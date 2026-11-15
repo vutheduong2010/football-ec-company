@@ -65,6 +65,8 @@ Vitest dùng `.env.test` với giá trị placeholder để luôn chạy trên d
 
 Hồ sơ cầu thủ dùng ba hạt giống `1` (mạnh), `2` (trung bình), `3` (yếu) và sáu vị trí `GK`, `CB`, `LB`, `RB`, `CM`, `ST`. Migration `202611150001_three_seeds_and_positions.sql` tự chuyển các vị trí cũ `CAM`, `LM`, `RM` về `CM` và không xóa cầu thủ.
 
+Migration `202611150003_lineup_positions_and_admin_delete.sql` snapshot tối đa ba vị trí phụ trong kết quả công bố và thêm RPC `delete_published_draw` chỉ dành cho admin.
+
 RLS là lớp bảo mật thật. `isAdmin` trong React chỉ dùng để điều chỉnh UX.
 
 ## 6. Kiểm tra trước khi dùng production

@@ -34,7 +34,7 @@ function toSnapshotPlayer(assignment: PublishedAssignment): Player {
     name: assignment.playerName,
     seed: assignment.seed,
     primaryPosition: assignment.position,
-    secondaryPositions: [],
+    secondaryPositions: assignment.secondaryPositions,
     positionGroup: POSITION_GROUPS[assignment.position],
     isActive: true,
   }
@@ -48,6 +48,11 @@ function mapAssignment(row: AssignmentRow): PublishedAssignment {
   if (!SEEDS.includes(row.seed_snapshot as Seed)) {
     throw new Error('Kết quả đã lưu chứa hạt giống không hợp lệ.')
   }
+  const secondaryPositions = [
+    ...new Set(row.secondary_positions_snapshot.map(normalizeSnapshotPosition)),
+  ]
+    .filter((secondary): secondary is Position => Boolean(secondary))
+    .filter((secondary) => secondary !== position)
 
   return {
     id: row.id,
@@ -59,6 +64,7 @@ function mapAssignment(row: AssignmentRow): PublishedAssignment {
     playerName: row.player_name_snapshot,
     seed: row.seed_snapshot as Seed,
     position,
+    secondaryPositions,
   }
 }
 
@@ -151,6 +157,13 @@ export async function getPublishedDraw(id: string) {
 
   const assignments = await loadAssignments([session.id])
   return buildPublishedDraw(session, assignments)
+}
+
+export async function deletePublishedDraw(id: string) {
+  const client = requireSupabase()
+  const { data, error } = await client.rpc('delete_published_draw', { p_session_id: id })
+  if (error) throw error
+  if (data !== true) throw new Error('Không thể xác nhận kết quả đã được xóa.')
 }
 
 export async function publishDraw(input: PublishDrawInput) {

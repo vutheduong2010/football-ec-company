@@ -1,4 +1,5 @@
-import { CalendarDays, ChevronRight, Clock3, Trophy, Users } from 'lucide-react'
+import { CalendarDays, ChevronRight, Clock3, Trash2, Trophy, Users } from 'lucide-react'
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 
 import { Badge } from '../components/ui/Badge'
@@ -9,11 +10,35 @@ import { PageHeader } from '../components/ui/PageHeader'
 import { StatusState } from '../components/ui/StatusState'
 import { mockPublishedDraw } from '../data/mockPublishedDraw'
 import { formatMatchDate } from '../features/draw/drawFormat'
+import { deletePublishedDraw } from '../features/draw/drawService'
+import { useAuth } from '../hooks/useAuth'
 import { usePublishedDraws } from '../hooks/usePublishedDraws'
 
 export function ResultsPage() {
+  const { isAdmin } = useAuth()
   const { draws: remoteDraws, isLoading, error, refresh, isDemo } = usePublishedDraws()
   const draws = isDemo ? [mockPublishedDraw] : remoteDraws
+  const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
+
+  const handleDelete = async (drawId: string, title: string) => {
+    if (!isAdmin || isDemo) return
+    if (!window.confirm(`Xóa vĩnh viễn kết quả “${title}”? Thao tác này không thể hoàn tác.`))
+      return
+
+    setDeletingId(drawId)
+    setDeleteError(null)
+    try {
+      await deletePublishedDraw(drawId)
+      await refresh()
+    } catch (requestError) {
+      setDeleteError(
+        requestError instanceof Error ? requestError.message : 'Không thể xóa kết quả đã công bố.',
+      )
+    } finally {
+      setDeletingId(null)
+    }
+  }
 
   return (
     <div>
@@ -22,6 +47,12 @@ export function ResultsPage() {
         title="Kết quả đã công bố"
         description="Mở lại đội hình bất biến, tải ảnh PNG hoặc chia sẻ đường dẫn cho mọi người trong đội."
       />
+
+      {deleteError && (
+        <div className="mb-4">
+          <Notice tone="error">{deleteError}</Notice>
+        </div>
+      )}
 
       {isLoading ? (
         <StatusState type="loading" />
@@ -92,6 +123,19 @@ export function ResultsPage() {
                   <ChevronRight className="size-4 transition-transform group-hover:translate-x-0.5" />
                 </div>
               </Link>
+              <div className="border-t border-white/7 p-3">
+                <Button
+                  variant="danger"
+                  className="w-full disabled:opacity-40"
+                  disabled={!isAdmin || isDemo || deletingId === draw.id}
+                  onClick={() => void handleDelete(draw.id, draw.title)}
+                  title={isAdmin ? 'Xóa kết quả đã công bố' : 'Chỉ admin mới có quyền xóa kết quả'}
+                  aria-label={`Xóa kết quả ${draw.title}`}
+                >
+                  <Trash2 className="size-4" />
+                  {deletingId === draw.id ? 'Đang xóa…' : 'Xóa kết quả'}
+                </Button>
+              </div>
             </Card>
           ))}
         </div>
@@ -111,7 +155,7 @@ export function ResultsPage() {
           </div>
         </div>
         <Badge>
-          <Users className="size-3" /> Viewer chỉ đọc
+          <Users className="size-3" /> {isAdmin ? 'Admin có quyền xóa' : 'Viewer chỉ đọc'}
         </Badge>
       </Card>
     </div>

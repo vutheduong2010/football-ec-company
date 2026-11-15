@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 
+import { arrangeLineup } from '../../algorithms/arrangeLineup'
 import type { Player } from '../../types/player'
 import { Pitch7 } from './Pitch7'
 
@@ -33,5 +34,64 @@ describe('Pitch7', () => {
     expect(screen.getByText('Tí')).toBeVisible()
     expect(screen.getByText('Không biệt danh')).toBeVisible()
     expect(screen.queryByText('Nguyễn Văn A')).not.toBeInTheDocument()
+  })
+
+  it('tối ưu toàn đội theo vị trí chính trước rồi mới tới vị trí phụ', () => {
+    const lineupPlayers: Player[] = [
+      {
+        ...players[0],
+        id: 'gk',
+        primaryPosition: 'GK',
+        positionGroup: 'GK',
+      },
+      {
+        ...players[0],
+        id: 'versatile-defender',
+        primaryPosition: 'LB',
+        secondaryPositions: ['CB'],
+        positionGroup: 'DEF',
+      },
+      {
+        ...players[0],
+        id: 'left-back-only',
+        primaryPosition: 'LB',
+        secondaryPositions: [],
+        positionGroup: 'DEF',
+      },
+      {
+        ...players[0],
+        id: 'right-back',
+        primaryPosition: 'RB',
+        positionGroup: 'DEF',
+      },
+      {
+        ...players[0],
+        id: 'midfielder-1',
+        primaryPosition: 'CM',
+        positionGroup: 'MID',
+      },
+      {
+        ...players[0],
+        id: 'midfielder-2',
+        primaryPosition: 'CM',
+        positionGroup: 'MID',
+      },
+      {
+        ...players[0],
+        id: 'striker',
+        primaryPosition: 'ST',
+        positionGroup: 'ATT',
+      },
+    ]
+
+    const lineup = arrangeLineup(lineupPlayers)
+    expect(lineup.find(({ slot }) => slot.position === 'LB')).toMatchObject({
+      player: { id: 'left-back-only' },
+      preference: 'primary',
+    })
+    expect(lineup.find(({ slot }) => slot.position === 'CB')).toMatchObject({
+      player: { id: 'versatile-defender' },
+      preference: 'secondary',
+    })
   })
 })

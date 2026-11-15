@@ -92,6 +92,7 @@ export type Database = {
           player_name_snapshot: string
           seed_snapshot: number
           position_snapshot: string
+          secondary_positions_snapshot: string[]
         }
         Insert: {
           id?: string
@@ -103,6 +104,7 @@ export type Database = {
           player_name_snapshot: string
           seed_snapshot: number
           position_snapshot: string
+          secondary_positions_snapshot?: string[]
         }
         Update: never
         Relationships: []
@@ -112,6 +114,10 @@ export type Database = {
     Functions: {
       is_admin: {
         Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
+      delete_published_draw: {
+        Args: { p_session_id: string }
         Returns: boolean
       }
       publish_draw: {

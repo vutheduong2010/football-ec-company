@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { balanceTeams } from '../../algorithms/balanceTeams'
 import type { Database } from '../../types/database'
 import { POSITION_GROUPS, type Player, type Position, type Seed } from '../../types/player'
-import { buildPublishedDraw, publishDraw } from './drawService'
+import { buildPublishedDraw, deletePublishedDraw, publishDraw } from './drawService'
 
 const { rpcMock } = vi.hoisted(() => ({ rpcMock: vi.fn() }))
 
@@ -63,6 +63,7 @@ describe('drawService', () => {
       player_name_snapshot: player.nickname ?? player.name,
       seed_snapshot: player.seed,
       position_snapshot: player.primaryPosition,
+      secondary_positions_snapshot: index === 0 ? ['CB'] : player.secondaryPositions,
     }))
 
     const draw = buildPublishedDraw(makeSession(), rows)
@@ -73,6 +74,17 @@ describe('drawService', () => {
     expect(draw.teams[1].reservePlayerIds).toHaveLength(1)
     expect(draw.qualityMetrics.sizeRange).toBe(0)
     expect(draw.teams[0].players[0].name).toBe('Người gác đền')
+    expect(draw.teams[0].players[0].secondaryPositions).toEqual(['CB'])
+  })
+
+  it('gọi RPC xóa kết quả dành cho admin', async () => {
+    rpcMock.mockResolvedValue({ data: true, error: null })
+
+    await deletePublishedDraw('10000000-0000-4000-8000-000000000001')
+
+    expect(rpcMock).toHaveBeenCalledWith('delete_published_draw', {
+      p_session_id: '10000000-0000-4000-8000-000000000001',
+    })
   })
 
   it('gọi RPC publish_draw đúng một lần với assignments đã khóa', async () => {

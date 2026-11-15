@@ -11,6 +11,7 @@ export interface PublishedAssignment {
   playerName: string
   seed: Seed
   position: Player['primaryPosition']
+  secondaryPositions: Player['secondaryPositions']
 }
 
 export interface PublishedTeam {

@@ -44,11 +44,13 @@ describe('App', () => {
     const { unmount } = renderApp(['/results'])
     expect(screen.getByRole('heading', { name: 'Kết quả đã công bố' })).toBeVisible()
     expect(screen.getByText('Kèo tối thứ Năm')).toBeVisible()
+    expect(screen.getByRole('button', { name: 'Xóa kết quả Kèo tối thứ Năm' })).toBeDisabled()
     unmount()
 
     renderApp(['/results/demo-1211'])
     expect(screen.getByRole('heading', { name: 'Kèo tối thứ Năm' })).toBeVisible()
     expect(screen.getByRole('button', { name: /Tải PNG/ })).toBeEnabled()
+    expect(screen.getByRole('button', { name: 'Xóa kết quả' })).toBeDisabled()
     expect(screen.getByLabelText('Sơ đồ sân 7 đội A')).toBeVisible()
   })
 

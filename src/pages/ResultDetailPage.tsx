@@ -1,6 +1,6 @@
-import { ArrowLeft, CalendarDays, Download, Share2, ShieldCheck } from 'lucide-react'
+import { ArrowLeft, CalendarDays, Download, Share2, ShieldCheck, Trash2 } from 'lucide-react'
 import { useRef, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 
 import { ExportResultCard } from '../components/football/ExportResultCard'
 import { Pitch7 } from '../components/football/Pitch7'
@@ -13,6 +13,8 @@ import { Notice } from '../components/ui/Notice'
 import { StatusState } from '../components/ui/StatusState'
 import { mockPublishedDraw } from '../data/mockPublishedDraw'
 import { TEAM_LABELS, formatMatchDate } from '../features/draw/drawFormat'
+import { deletePublishedDraw } from '../features/draw/drawService'
+import { useAuth } from '../hooks/useAuth'
 import { usePublishedDraw } from '../hooks/usePublishedDraw'
 
 function safeFileName(value: string) {
@@ -27,11 +29,15 @@ function safeFileName(value: string) {
 
 export function ResultDetailPage() {
   const { id } = useParams()
+  const navigate = useNavigate()
+  const { isAdmin } = useAuth()
   const { draw: remoteDraw, isLoading, error, isDemo } = usePublishedDraw(id)
   const draw = isDemo ? mockPublishedDraw : remoteDraw
   const [activeTeamIndex, setActiveTeamIndex] = useState(0)
   const [isExporting, setIsExporting] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
   const [actionMessage, setActionMessage] = useState<string | null>(null)
+  const [actionError, setActionError] = useState<string | null>(null)
   const exportRef = useRef<HTMLDivElement>(null)
 
   if (isLoading) return <StatusState type="loading" />
@@ -113,6 +119,26 @@ export function ResultDetailPage() {
     }
   }
 
+  const handleDelete = async () => {
+    if (!isAdmin || isDemo || isDeleting) return
+    if (!window.confirm(`Xóa vĩnh viễn kết quả “${draw.title}”? Thao tác này không thể hoàn tác.`))
+      return
+
+    setIsDeleting(true)
+    setActionMessage(null)
+    setActionError(null)
+    try {
+      await deletePublishedDraw(draw.id)
+      navigate('/results', { replace: true })
+    } catch (deleteError) {
+      setActionError(
+        deleteError instanceof Error ? deleteError.message : 'Không thể xóa kết quả đã công bố.',
+      )
+    } finally {
+      setIsDeleting(false)
+    }
+  }
+
   return (
     <div>
       <Link to="/results" className={buttonClass('ghost', 'mb-4 -ml-2 px-2')}>
@@ -133,7 +159,16 @@ export function ResultDetailPage() {
             {draw.assignments.length} người
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:justify-end">
+          <Button
+            variant="danger"
+            className="col-span-2 disabled:opacity-40 sm:order-first sm:flex-none"
+            disabled={!isAdmin || isDemo || isDeleting}
+            onClick={() => void handleDelete()}
+            title={isAdmin ? 'Xóa kết quả đã công bố' : 'Chỉ admin mới có quyền xóa kết quả'}
+          >
+            <Trash2 className="size-4" /> {isDeleting ? 'Đang xóa…' : 'Xóa kết quả'}
+          </Button>
           <Button
             variant="secondary"
             className="flex-1 sm:flex-none"
@@ -154,6 +189,11 @@ export function ResultDetailPage() {
       {actionMessage && (
         <div className="mt-4">
           <Notice tone="info">{actionMessage}</Notice>
+        </div>
+      )}
+      {actionError && (
+        <div className="mt-4">
+          <Notice tone="error">{actionError}</Notice>
         </div>
       )}
 
@@ -186,7 +226,7 @@ export function ResultDetailPage() {
           </div>
           <Pitch7 players={startingPlayers} team={activeTeamLabel} />
           <p className="mt-4 text-center text-[11px] leading-5 text-slate-600">
-            Sơ đồ hiển thị tối đa 7 người đá chính; phần còn lại được xếp dự bị luân phiên.
+            Sơ đồ ưu tiên vị trí chính, sau đó đến vị trí phụ; phần còn lại được xếp linh hoạt.
           </p>
         </Card>
 

@@ -1,7 +1,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(24);
+select plan(28);
 
 insert into auth.users (
   id,
@@ -212,6 +212,12 @@ select throws_ok(
   null,
   'authenticated non-admin cannot publish'
 );
+select throws_ok(
+  $$select public.delete_published_draw('20000000-0000-4000-8000-000000000001')$$,
+  '42501',
+  'Admin access required.',
+  'authenticated non-admin cannot delete a published result'
+);
 
 reset role;
 set local role authenticated;
@@ -291,6 +297,18 @@ select is(
   2::bigint,
   'atomic publish created one complete published session'
 );
+select is(
+  (
+    select secondary_positions_snapshot
+    from public.draw_assignments
+    where player_id = '10000000-0000-4000-8000-000000000002'
+      and session_id <> '20000000-0000-4000-8000-000000000002'
+    order by id desc
+    limit 1
+  ),
+  array['CM']::text[],
+  'publish snapshots secondary positions for deterministic lineup placement'
+);
 
 reset role;
 select throws_ok(
@@ -308,6 +326,26 @@ select throws_ok(
   '55000',
   'Assignments in a published session are immutable.',
   'published assignments are immutable even outside RLS'
+);
+
+set local role authenticated;
+select set_config(
+  'request.jwt.claims',
+  '{"sub":"00000000-0000-4000-8000-000000000001","role":"authenticated"}',
+  true
+);
+select lives_ok(
+  $$select public.delete_published_draw('20000000-0000-4000-8000-000000000001')$$,
+  'admin can delete a published result through the guarded RPC'
+);
+select is(
+  (
+    select count(*)
+    from public.draw_sessions
+    where id = '20000000-0000-4000-8000-000000000001'
+  ),
+  0::bigint,
+  'admin delete removes the published session'
 );
 
 select * from finish();
