@@ -1,13 +1,21 @@
 import { POSITION_GROUPS, type Player, type Position } from '../types/player'
 
-export const FORMATION: Array<{ position: Position; left: string; top: string }> = [
-  { position: 'GK', left: '50%', top: '87%' },
-  { position: 'LB', left: '22%', top: '67%' },
-  { position: 'CB', left: '50%', top: '72%' },
-  { position: 'RB', left: '78%', top: '67%' },
-  { position: 'CM', left: '32%', top: '40%' },
-  { position: 'CM', left: '68%', top: '40%' },
-  { position: 'ST', left: '50%', top: '14%' },
+export type FormationSlotId = 'gk' | 'lb' | 'cb' | 'rb' | 'cm-left' | 'cm-right' | 'st'
+export type LineupPlayerIds = Partial<Record<FormationSlotId, string>>
+
+export const FORMATION: Array<{
+  id: FormationSlotId
+  position: Position
+  left: string
+  top: string
+}> = [
+  { id: 'gk', position: 'GK', left: '50%', top: '87%' },
+  { id: 'lb', position: 'LB', left: '22%', top: '67%' },
+  { id: 'cb', position: 'CB', left: '50%', top: '72%' },
+  { id: 'rb', position: 'RB', left: '78%', top: '67%' },
+  { id: 'cm-left', position: 'CM', left: '32%', top: '40%' },
+  { id: 'cm-right', position: 'CM', left: '68%', top: '40%' },
+  { id: 'st', position: 'ST', left: '50%', top: '14%' },
 ]
 
 export type PositionPreference = 'primary' | 'secondary' | 'group' | 'fallback'
@@ -18,7 +26,7 @@ export interface ArrangedLineupPlayer {
   preference: PositionPreference
 }
 
-function getPositionPreference(player: Player, position: Position): PositionPreference {
+export function getPositionPreference(player: Player, position: Position): PositionPreference {
   if (player.primaryPosition === position) return 'primary'
   if (player.secondaryPositions.includes(position)) return 'secondary'
   if (player.positionGroup === POSITION_GROUPS[position]) return 'group'
@@ -81,4 +89,48 @@ export function arrangeLineup(players: readonly Player[]): ArrangedLineupPlayer[
 
   search(0, new Set(), [])
   return best.sort((left, right) => FORMATION.indexOf(left.slot) - FORMATION.indexOf(right.slot))
+}
+
+export function createLineupPlayerIds(players: readonly Player[]): LineupPlayerIds {
+  return Object.fromEntries(
+    arrangeLineup(players).map(({ player, slot }) => [slot.id, player.id]),
+  ) as LineupPlayerIds
+}
+
+export function arrangeLineupFromPlayerIds(
+  players: readonly Player[],
+  lineupPlayerIds: LineupPlayerIds,
+): ArrangedLineupPlayer[] {
+  const playerById = new Map(players.map((player) => [player.id, player]))
+  return FORMATION.flatMap((slot) => {
+    const playerId = lineupPlayerIds[slot.id]
+    const player = playerId ? playerById.get(playerId) : undefined
+    return player
+      ? [{ player, slot, preference: getPositionPreference(player, slot.position) }]
+      : []
+  })
+}
+
+export function swapLineupPlayers(
+  lineupPlayerIds: LineupPlayerIds,
+  sourcePlayerId: string,
+  targetPlayerId: string,
+): LineupPlayerIds {
+  if (sourcePlayerId === targetPlayerId) return lineupPlayerIds
+
+  const entries = Object.entries(lineupPlayerIds) as Array<[FormationSlotId, string]>
+  const sourceSlot = entries.find(([, playerId]) => playerId === sourcePlayerId)?.[0]
+  const targetSlot = entries.find(([, playerId]) => playerId === targetPlayerId)?.[0]
+  if (!sourceSlot && !targetSlot) return lineupPlayerIds
+
+  const next = { ...lineupPlayerIds }
+  if (sourceSlot && targetSlot) {
+    next[sourceSlot] = targetPlayerId
+    next[targetSlot] = sourcePlayerId
+  } else if (sourceSlot) {
+    next[sourceSlot] = targetPlayerId
+  } else if (targetSlot) {
+    next[targetSlot] = sourcePlayerId
+  }
+  return next
 }

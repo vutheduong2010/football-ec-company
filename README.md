@@ -16,6 +16,7 @@ Frontend là ứng dụng React tĩnh trên GitHub Pages. Supabase cung cấp Po
 - Vòng quay tự động có pause/resume/skip và không làm đổi kết quả đã tính.
 - Publish session + assignments nguyên tử bằng PostgreSQL RPC.
 - Lịch sử public chỉ gồm phiên đã công bố, đội hình sân 7, dự bị và metrics.
+- Màn hình chi tiết cho phép kéo thả để đổi hai vị trí trên sân hoặc hoán đổi cầu thủ đá chính với dự bị trong phiên xem hiện tại.
 - Admin có thể xóa kết quả đã công bố qua RPC được bảo vệ; viewer nhìn thấy nút xóa ở trạng thái vô hiệu hóa.
 - Sơ đồ và kết quả ưu tiên biệt danh; nếu trống mới hiển thị tên cầu thủ.
 - Chia sẻ liên kết và xuất PNG sắc nét.

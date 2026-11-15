@@ -1,7 +1,12 @@
 import { ArrowLeft, CalendarDays, Download, Share2, ShieldCheck, Trash2 } from 'lucide-react'
-import { useRef, useState } from 'react'
+import { useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 
+import {
+  createLineupPlayerIds,
+  swapLineupPlayers,
+  type LineupPlayerIds,
+} from '../algorithms/arrangeLineup'
 import { ExportResultCard } from '../components/football/ExportResultCard'
 import { Pitch7 } from '../components/football/Pitch7'
 import { TeamPanel } from '../components/football/TeamPanel'
@@ -27,6 +32,8 @@ function safeFileName(value: string) {
     .toLowerCase()
 }
 
+type TeamLineups = Record<number, LineupPlayerIds>
+
 export function ResultDetailPage() {
   const { id } = useParams()
   const navigate = useNavigate()
@@ -38,7 +45,23 @@ export function ResultDetailPage() {
   const [isDeleting, setIsDeleting] = useState(false)
   const [actionMessage, setActionMessage] = useState<string | null>(null)
   const [actionError, setActionError] = useState<string | null>(null)
+  const [lineupState, setLineupState] = useState<{
+    drawId: string
+    lineups: TeamLineups
+  } | null>(null)
+  const [draggedPlayerId, setDraggedPlayerId] = useState<string | null>(null)
+  const [dropTargetPlayerId, setDropTargetPlayerId] = useState<string | null>(null)
   const exportRef = useRef<HTMLDivElement>(null)
+  const defaultLineups = useMemo<TeamLineups>(() => {
+    if (!draw) return {}
+    return Object.fromEntries(
+      draw.teams.map((team) => {
+        const startingSet = new Set(team.startingPlayerIds)
+        const startingPlayers = team.players.filter((player) => startingSet.has(player.id))
+        return [team.teamIndex, createLineupPlayerIds(startingPlayers)]
+      }),
+    )
+  }, [draw])
 
   if (isLoading) return <StatusState type="loading" />
 
@@ -70,8 +93,28 @@ export function ResultDetailPage() {
   const safeTeamIndex = Math.min(activeTeamIndex, draw.teams.length - 1)
   const activeTeam = draw.teams[safeTeamIndex]
   const activeTeamLabel = TEAM_LABELS[safeTeamIndex]
-  const startingSet = new Set(activeTeam.startingPlayerIds)
-  const startingPlayers = activeTeam.players.filter((player) => startingSet.has(player.id))
+  const teamLineups = lineupState?.drawId === draw.id ? lineupState.lineups : defaultLineups
+  const activeLineupPlayerIds = teamLineups[safeTeamIndex] ?? {}
+  const activeStartingPlayerIds = Object.values(activeLineupPlayerIds).filter(
+    (playerId): playerId is string => Boolean(playerId),
+  )
+  const displayedDraw = {
+    ...draw,
+    teams: draw.teams.map((team) => {
+      const lineup = teamLineups[team.teamIndex] ?? {}
+      const startingPlayerIds = Object.values(lineup).filter((playerId): playerId is string =>
+        Boolean(playerId),
+      )
+      const startingSet = new Set(startingPlayerIds)
+      return {
+        ...team,
+        startingPlayerIds,
+        reservePlayerIds: team.players
+          .filter((player) => !startingSet.has(player.id))
+          .map((player) => player.id),
+      }
+    }),
+  }
 
   const handleExport = async () => {
     if (!exportRef.current || isExporting) return
@@ -139,6 +182,56 @@ export function ResultDetailPage() {
     }
   }
 
+  const findDropTarget = (clientX: number, clientY: number) =>
+    document
+      .elementFromPoint(clientX, clientY)
+      ?.closest<HTMLElement>('[data-lineup-drop-player-id]')?.dataset.lineupDropPlayerId ?? null
+
+  const handleLineupPointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
+    if (event.button !== 0) return
+    const source = (event.target as Element).closest<HTMLElement>('[data-lineup-drag-player-id]')
+    const playerId = source?.dataset.lineupDragPlayerId
+    if (!playerId) return
+
+    event.preventDefault()
+    event.currentTarget.setPointerCapture(event.pointerId)
+    setDraggedPlayerId(playerId)
+    setDropTargetPlayerId(null)
+  }
+
+  const handleLineupPointerMove = (event: ReactPointerEvent<HTMLDivElement>) => {
+    if (!draggedPlayerId) return
+    const targetPlayerId = findDropTarget(event.clientX, event.clientY)
+    setDropTargetPlayerId(targetPlayerId === draggedPlayerId ? null : targetPlayerId)
+  }
+
+  const finishLineupDrag = (event: ReactPointerEvent<HTMLDivElement>) => {
+    if (!draggedPlayerId) return
+    const targetPlayerId = findDropTarget(event.clientX, event.clientY)
+
+    if (targetPlayerId && targetPlayerId !== draggedPlayerId) {
+      const nextLineup = swapLineupPlayers(activeLineupPlayerIds, draggedPlayerId, targetPlayerId)
+      setLineupState({
+        drawId: draw.id,
+        lineups: { ...teamLineups, [safeTeamIndex]: nextLineup },
+      })
+    }
+
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId)
+    }
+    setDraggedPlayerId(null)
+    setDropTargetPlayerId(null)
+  }
+
+  const cancelLineupDrag = (event: ReactPointerEvent<HTMLDivElement>) => {
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId)
+    }
+    setDraggedPlayerId(null)
+    setDropTargetPlayerId(null)
+  }
+
   return (
     <div>
       <Link to="/results" className={buttonClass('ghost', 'mb-4 -ml-2 px-2')}>
@@ -197,7 +290,13 @@ export function ResultDetailPage() {
         </div>
       )}
 
-      <div className="mt-6 grid gap-5 xl:grid-cols-[0.85fr_1.15fr]">
+      <div
+        className="mt-6 grid gap-5 xl:grid-cols-[0.85fr_1.15fr]"
+        onPointerDown={handleLineupPointerDown}
+        onPointerMove={handleLineupPointerMove}
+        onPointerUp={finishLineupDrag}
+        onPointerCancel={cancelLineupDrag}
+      >
         <Card className="p-4 sm:p-5">
           <div
             className={`mb-4 grid rounded-xl bg-ink-950/70 p-1 ring-1 ring-white/8 ${draw.teamCount === 3 ? 'grid-cols-3' : 'grid-cols-2'}`}
@@ -215,7 +314,11 @@ export function ResultDetailPage() {
                 <button
                   key={team.teamIndex}
                   type="button"
-                  onClick={() => setActiveTeamIndex(team.teamIndex)}
+                  onClick={() => {
+                    setActiveTeamIndex(team.teamIndex)
+                    setDraggedPlayerId(null)
+                    setDropTargetPlayerId(null)
+                  }}
                   className={`min-h-11 rounded-lg text-sm font-black transition focus-ring ${active ? activeClass : 'text-slate-500 hover:text-white'}`}
                   aria-pressed={active}
                 >
@@ -224,9 +327,16 @@ export function ResultDetailPage() {
               )
             })}
           </div>
-          <Pitch7 players={startingPlayers} team={activeTeamLabel} />
+          <Pitch7
+            players={activeTeam.players}
+            team={activeTeamLabel}
+            lineupPlayerIds={activeLineupPlayerIds}
+            draggedPlayerId={draggedPlayerId}
+            dropTargetPlayerId={dropTargetPlayerId}
+          />
           <p className="mt-4 text-center text-[11px] leading-5 text-slate-600">
-            Sơ đồ ưu tiên vị trí chính, sau đó đến vị trí phụ; phần còn lại được xếp linh hoạt.
+            Kéo cầu thủ trên sân hoặc ảnh đại diện trong danh sách để hoán đổi. Thay đổi chỉ áp dụng
+            trong phiên xem này.
           </p>
         </Card>
 
@@ -234,7 +344,10 @@ export function ResultDetailPage() {
           <TeamPanel
             team={activeTeamLabel}
             players={activeTeam.players}
-            startingPlayerIds={activeTeam.startingPlayerIds}
+            startingPlayerIds={activeStartingPlayerIds}
+            enablePlayerSwap
+            draggedPlayerId={draggedPlayerId}
+            dropTargetPlayerId={dropTargetPlayerId}
           />
 
           <Card className="p-5">
@@ -265,7 +378,7 @@ export function ResultDetailPage() {
       </div>
 
       <div className="pointer-events-none fixed left-[-10000px] top-0" aria-hidden="true">
-        <ExportResultCard ref={exportRef} draw={draw} />
+        <ExportResultCard ref={exportRef} draw={displayedDraw} />
       </div>
     </div>
   )

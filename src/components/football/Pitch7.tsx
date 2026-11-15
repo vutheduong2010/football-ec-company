@@ -1,12 +1,30 @@
-import { arrangeLineup } from '../../algorithms/arrangeLineup'
+import {
+  arrangeLineup,
+  arrangeLineupFromPlayerIds,
+  type LineupPlayerIds,
+} from '../../algorithms/arrangeLineup'
 import { getPlayerDisplayName } from '../../features/players/playerDisplay'
 import type { Player } from '../../types/player'
 import { PlayerAvatar } from './PlayerAvatar'
 
-export function Pitch7({ players, team }: { players: readonly Player[]; team: 'A' | 'B' | 'C' }) {
+export function Pitch7({
+  players,
+  team,
+  lineupPlayerIds,
+  draggedPlayerId,
+  dropTargetPlayerId,
+}: {
+  players: readonly Player[]
+  team: 'A' | 'B' | 'C'
+  lineupPlayerIds?: LineupPlayerIds
+  draggedPlayerId?: string | null
+  dropTargetPlayerId?: string | null
+}) {
   const accent =
     team === 'A' ? 'ring-brand-400' : team === 'B' ? 'ring-blue-400' : 'ring-orange-400'
-  const lineup = arrangeLineup(players)
+  const lineup = lineupPlayerIds
+    ? arrangeLineupFromPlayerIds(players, lineupPlayerIds)
+    : arrangeLineup(players)
 
   return (
     <div
@@ -20,10 +38,16 @@ export function Pitch7({ players, team }: { players: readonly Player[]; team: 'A
       {lineup.map(({ player, slot, preference }) => (
         <div
           key={player.id}
-          className="absolute w-20 -translate-x-1/2 -translate-y-1/2 text-center"
+          className={`absolute w-20 -translate-x-1/2 -translate-y-1/2 touch-none select-none text-center transition ${
+            draggedPlayerId === player.id
+              ? 'z-20 scale-105 cursor-grabbing opacity-55'
+              : 'cursor-grab'
+          } ${dropTargetPlayerId === player.id ? 'z-10 rounded-xl bg-white/12 ring-2 ring-white/70' : ''}`}
           style={{ left: slot.left, top: slot.top }}
           title={`${getPlayerDisplayName(player)} — ${slot.position} (${preference === 'primary' ? 'vị trí chính' : preference === 'secondary' ? 'vị trí phụ' : 'xếp linh hoạt'})`}
           data-position-preference={preference}
+          data-lineup-drag-player-id={player.id}
+          data-lineup-drop-player-id={player.id}
         >
           <PlayerAvatar className={`mx-auto size-9 rounded-full shadow-lg ring-4 ${accent}`} />
           <span className="mt-1 block truncate rounded-md bg-ink-950/80 px-1.5 py-0.5 text-[9px] font-black text-white backdrop-blur-sm">

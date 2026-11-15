@@ -52,6 +52,7 @@ describe('App', () => {
     expect(screen.getByRole('button', { name: /Tải PNG/ })).toBeEnabled()
     expect(screen.getByRole('button', { name: 'Xóa kết quả' })).toBeDisabled()
     expect(screen.getByLabelText('Sơ đồ sân 7 đội A')).toBeVisible()
+    expect(screen.getByText(/Kéo cầu thủ trên sân hoặc ảnh đại diện trong danh sách/)).toBeVisible()
   })
 
   it('không cho viewer mở giao diện điểm danh', () => {

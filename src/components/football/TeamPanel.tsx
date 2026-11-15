@@ -15,12 +15,18 @@ export function TeamPanel({
   players,
   compact = false,
   startingPlayerIds,
+  enablePlayerSwap = false,
+  draggedPlayerId,
+  dropTargetPlayerId,
   emptyMessage = 'Chưa có cầu thủ được hiển thị.',
 }: {
   team: 'A' | 'B' | 'C'
   players: Player[]
   compact?: boolean
   startingPlayerIds?: readonly string[]
+  enablePlayerSwap?: boolean
+  draggedPlayerId?: string | null
+  dropTargetPlayerId?: string | null
   emptyMessage?: string
 }) {
   const style = teamStyles[team]
@@ -52,8 +58,22 @@ export function TeamPanel({
           </div>
         )}
         {orderedPlayers.map((player) => (
-          <div key={player.id} className="flex items-center gap-3 px-3 py-2.5">
-            <PlayerAvatar className="size-8 rounded-lg ring-1 ring-white/10" />
+          <div
+            key={player.id}
+            className={`flex items-center gap-3 px-3 py-2.5 transition ${
+              dropTargetPlayerId === player.id ? 'bg-white/8 ring-1 ring-inset ring-white/25' : ''
+            } ${draggedPlayerId === player.id ? 'opacity-55' : ''}`}
+            data-lineup-drop-player-id={enablePlayerSwap ? player.id : undefined}
+          >
+            <span
+              className={`inline-flex shrink-0 ${enablePlayerSwap ? 'touch-none cursor-grab select-none active:cursor-grabbing' : ''}`}
+              data-lineup-drag-player-id={enablePlayerSwap ? player.id : undefined}
+              title={
+                enablePlayerSwap ? `Kéo ${getPlayerDisplayName(player)} để đổi vị trí` : undefined
+              }
+            >
+              <PlayerAvatar className="size-8 rounded-lg ring-1 ring-white/10" />
+            </span>
             <span className="min-w-0 flex-1 truncate text-xs font-bold text-slate-200">
               {getPlayerDisplayName(player)}
             </span>

@@ -1,7 +1,11 @@
 import { render, screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 
-import { arrangeLineup } from '../../algorithms/arrangeLineup'
+import {
+  arrangeLineup,
+  createLineupPlayerIds,
+  swapLineupPlayers,
+} from '../../algorithms/arrangeLineup'
 import type { Player } from '../../types/player'
 import { Pitch7 } from './Pitch7'
 
@@ -150,5 +154,20 @@ describe('Pitch7', () => {
     expect(
       lineup.every(({ preference }) => preference === 'primary' || preference === 'secondary'),
     ).toBe(true)
+  })
+
+  it('hoán đổi được hai vị trí trên sân và cầu thủ chính với dự bị', () => {
+    const starters = players.map((player, index) => ({ ...player, id: `starter-${index}` }))
+    const initial = createLineupPlayerIds(starters)
+    const [firstPlayerId, secondPlayerId] = Object.values(initial)
+
+    const swappedOnPitch = swapLineupPlayers(initial, firstPlayerId!, secondPlayerId!)
+    expect(Object.entries(swappedOnPitch).find(([, id]) => id === firstPlayerId)?.[0]).toBe(
+      Object.entries(initial).find(([, id]) => id === secondPlayerId)?.[0],
+    )
+
+    const swappedWithReserve = swapLineupPlayers(swappedOnPitch, 'reserve-player', firstPlayerId!)
+    expect(Object.values(swappedWithReserve)).toContain('reserve-player')
+    expect(Object.values(swappedWithReserve)).not.toContain(firstPlayerId)
   })
 })
