@@ -11,6 +11,7 @@ import {
 import { Link } from 'react-router-dom'
 
 import { Badge } from '../components/ui/Badge'
+import { PlayerAvatar } from '../components/football/PlayerAvatar'
 import { buttonClass } from '../components/ui/buttonStyles'
 import { Card } from '../components/ui/Card'
 import { mockPublishedDraw } from '../data/mockPublishedDraw'
@@ -139,13 +140,12 @@ export function HomePage() {
                     </div>
                     <div className="mt-4 flex -space-x-2">
                       {team.players.slice(0, 5).map((player) => (
-                        <span
+                        <PlayerAvatar
                           key={player.id}
+                          alt={`Ảnh đại diện ${getPlayerDisplayName(player)}`}
                           title={getPlayerDisplayName(player)}
-                          className="grid size-9 place-items-center rounded-full border-2 border-panel bg-slate-700 text-[9px] font-black text-white"
-                        >
-                          {player.primaryPosition}
-                        </span>
+                          className="size-9 rounded-full border-2 border-panel"
+                        />
                       ))}
                       {team.players.length > 5 && (
                         <span className="grid size-9 place-items-center rounded-full border-2 border-panel bg-white/10 text-[10px] font-black text-white">

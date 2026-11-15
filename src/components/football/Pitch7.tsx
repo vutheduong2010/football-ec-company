@@ -1,5 +1,6 @@
-import { getPlayerDisplayName, getPlayerInitials } from '../../features/players/playerDisplay'
+import { getPlayerDisplayName } from '../../features/players/playerDisplay'
 import { POSITION_GROUPS, type Player, type Position } from '../../types/player'
+import { PlayerAvatar } from './PlayerAvatar'
 
 const FORMATION: Array<{ position: Position; left: string; top: string }> = [
   { position: 'GK', left: '50%', top: '87%' },
@@ -33,7 +34,8 @@ function arrangeLineup(players: Player[]) {
 }
 
 export function Pitch7({ players, team }: { players: Player[]; team: 'A' | 'B' | 'C' }) {
-  const accent = team === 'A' ? 'bg-brand-400' : team === 'B' ? 'bg-blue-400' : 'bg-orange-400'
+  const accent =
+    team === 'A' ? 'ring-brand-400' : team === 'B' ? 'ring-blue-400' : 'ring-orange-400'
   const lineup = arrangeLineup(players)
 
   return (
@@ -52,11 +54,7 @@ export function Pitch7({ players, team }: { players: Player[]; team: 'A' | 'B' |
           style={{ left: slot.left, top: slot.top }}
           title={`${getPlayerDisplayName(player)} — ${player.primaryPosition}`}
         >
-          <span
-            className={`mx-auto grid size-9 place-items-center rounded-full ${accent} text-xs font-black text-ink-950 shadow-lg ring-4 ring-ink-950/45`}
-          >
-            {getPlayerInitials(player)}
-          </span>
+          <PlayerAvatar className={`mx-auto size-9 rounded-full shadow-lg ring-4 ${accent}`} />
           <span className="mt-1 block truncate rounded-md bg-ink-950/80 px-1.5 py-0.5 text-[9px] font-black text-white backdrop-blur-sm">
             {getPlayerDisplayName(player)}
           </span>

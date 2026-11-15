@@ -4,6 +4,7 @@ import type { ReactNode } from 'react'
 import type { Player } from '../../types/player'
 import { Badge } from '../ui/Badge'
 import { Card } from '../ui/Card'
+import { PlayerAvatar } from './PlayerAvatar'
 
 export function PlayerCard({
   player,
@@ -20,9 +21,10 @@ export function PlayerCard({
     <Card
       className={`flex min-h-20 items-center gap-3 p-3.5 transition ${!player.isActive ? 'opacity-60' : ''} ${selected ? 'border-brand-400/30 bg-brand-400/8' : 'hover:border-white/14'}`}
     >
-      <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-slate-700 to-slate-800 text-sm font-black text-white ring-1 ring-white/10">
-        {player.id.slice(-2)}
-      </span>
+      <PlayerAvatar
+        alt={`Ảnh đại diện ${player.nickname?.trim() || player.name}`}
+        className="size-11 rounded-xl ring-1 ring-white/10"
+      />
       <span className="min-w-0 flex-1 text-left">
         <span className="flex flex-wrap items-center gap-2">
           <span className="truncate text-sm font-extrabold text-white">{player.name}</span>

@@ -2,6 +2,7 @@ import type { Player } from '../../types/player'
 import { getPlayerDisplayName } from '../../features/players/playerDisplay'
 import { Badge } from '../ui/Badge'
 import { Card } from '../ui/Card'
+import { PlayerAvatar } from './PlayerAvatar'
 
 const teamStyles = {
   A: { tone: 'green' as const, dot: 'bg-brand-400', border: 'border-brand-400/20' },
@@ -46,9 +47,7 @@ export function TeamPanel({
         )}
         {players.map((player) => (
           <div key={player.id} className="flex items-center gap-3 px-3 py-2.5">
-            <span className="grid size-8 place-items-center rounded-lg bg-white/6 text-[11px] font-black text-slate-300">
-              {player.id.slice(-2)}
-            </span>
+            <PlayerAvatar className="size-8 rounded-lg ring-1 ring-white/10" />
             <span className="min-w-0 flex-1 truncate text-xs font-bold text-slate-200">
               {getPlayerDisplayName(player)}
             </span>

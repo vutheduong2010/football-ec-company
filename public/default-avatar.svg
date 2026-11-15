@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Ảnh đại diện mặc định">
+  <rect width="512" height="512" fill="#aaa8ab" />
+  <circle cx="256" cy="180" r="106" fill="#fff" />
+  <ellipse cx="256" cy="542" rx="292" ry="222" fill="#fff" />
+</svg>
