@@ -1,5 +1,6 @@
 import { balanceTeams } from '../algorithms/balanceTeams'
 import { buildPublishedDraw } from '../features/draw/drawService'
+import { getPlayerDisplayName } from '../features/players/playerDisplay'
 import type { Database } from '../types/database'
 import { mockPlayers } from './mockData'
 
@@ -14,7 +15,7 @@ const session: SessionRow = {
   field_size: 7,
   status: 'published',
   created_by: 'demo-admin',
-  algorithm_version: 'balanced-candidates-v1',
+  algorithm_version: 'balanced-candidates-v2',
   draw_seed: 'demo-phase-6',
   created_at: '2026-11-12T12:00:00.000Z',
   published_at: '2026-11-12T12:05:00.000Z',
@@ -37,7 +38,7 @@ const assignments: AssignmentRow[] = balanced.assignments.map((assignment) => {
     team_index: assignment.teamIndex,
     is_starting: assignment.isStarting,
     reveal_order: assignment.revealOrder,
-    player_name_snapshot: player.name,
+    player_name_snapshot: getPlayerDisplayName(player),
     seed_snapshot: player.seed,
     position_snapshot: player.primaryPosition,
   }

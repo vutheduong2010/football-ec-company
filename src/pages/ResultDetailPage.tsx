@@ -210,7 +210,7 @@ export function ResultDetailPage() {
             <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
               {[
                 ['Quân số', draw.qualityMetrics.sizeRange === 0 ? 'Cân tuyệt đối' : 'Lệch 1'],
-                ['Hạt giống', `Lệch ${draw.qualityMetrics.seedOneRange}`],
+                ['Ba hạt giống', `Lệch tối đa ${draw.qualityMetrics.maxSeedRange}`],
                 ['Thủ môn', `Lệch ${draw.qualityMetrics.goalkeeperRange}`],
                 ['Phiên bản', draw.algorithmVersion],
               ].map(([label, value]) => (

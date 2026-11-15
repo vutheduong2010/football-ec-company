@@ -1,4 +1,4 @@
-import { POSITION_GROUPS, type Player, type PositionGroup } from '../types/player'
+import { POSITION_GROUPS, SEEDS, type Player, type PositionGroup, type Seed } from '../types/player'
 
 const GROUPS: PositionGroup[] = ['GK', 'DEF', 'MID', 'ATT']
 const OUTFIELD_GROUPS: Array<'DEF' | 'MID' | 'ATT'> = ['DEF', 'MID', 'ATT']
@@ -7,8 +7,7 @@ export type GroupMetric = Record<PositionGroup, number>
 
 export interface TeamBalanceStats {
   size: number
-  seedOne: number
-  seedTwo: number
+  seedCounts: Record<Seed, number>
   primary: GroupMetric
   coverage: GroupMetric
 }
@@ -25,7 +24,8 @@ export interface QualityMetrics {
   penalty: number
   qualityScore: number
   sizeRange: number
-  seedOneRange: number
+  seedRanges: Record<Seed, number>
+  maxSeedRange: number
   goalkeeperRange: number
   positionRanges: Record<'DEF' | 'MID' | 'ATT', number>
   components: BalancePenalty
@@ -56,11 +56,13 @@ export function getTeamStats(players: readonly Player[]): TeamBalanceStats {
     for (const group of secondaryGroups) coverage[group] += 0.35
   }
 
-  const seedOne = players.filter((player) => player.seed === 1).length
   return {
     size: players.length,
-    seedOne,
-    seedTwo: players.length - seedOne,
+    seedCounts: {
+      1: players.filter((player) => player.seed === 1).length,
+      2: players.filter((player) => player.seed === 2).length,
+      3: players.filter((player) => player.seed === 3).length,
+    },
     primary,
     coverage,
   }
@@ -84,7 +86,10 @@ export function scoreBalance(
   const goalkeeper =
     Math.max(0, targetGoalkeeperTeams - coveredGoalkeeperTeams) * 220 +
     range(teamStats.map((team) => team.primary.GK)) * 24
-  const seed = range(teamStats.map((team) => team.seedOne)) * 58
+  const seedRanges = Object.fromEntries(
+    SEEDS.map((seed) => [seed, range(teamStats.map((team) => team.seedCounts[seed]))]),
+  ) as Record<Seed, number>
+  const seed = seedRanges[1] * 58 + seedRanges[2] * 46 + seedRanges[3] * 38
 
   const groupWeights: Record<'DEF' | 'MID' | 'ATT', number> = {
     DEF: 22,
@@ -117,7 +122,8 @@ export function scoreBalance(
     penalty,
     qualityScore: Math.max(0, Math.round((100 * 500) / (500 + penalty))),
     sizeRange: range(teamStats.map((team) => team.size)),
-    seedOneRange: range(teamStats.map((team) => team.seedOne)),
+    seedRanges,
+    maxSeedRange: Math.max(...Object.values(seedRanges)),
     goalkeeperRange: range(teamStats.map((team) => team.primary.GK)),
     positionRanges: {
       DEF: range(teamStats.map((team) => team.coverage.DEF)),

@@ -1,4 +1,5 @@
 import type { Player } from '../../types/player'
+import { getPlayerDisplayName } from '../../features/players/playerDisplay'
 import { Badge } from '../ui/Badge'
 import { Card } from '../ui/Card'
 
@@ -23,6 +24,8 @@ export function TeamPanel({
 }) {
   const style = teamStyles[team]
   const seedOne = players.filter((player) => player.seed === 1).length
+  const seedTwo = players.filter((player) => player.seed === 2).length
+  const seedThree = players.filter((player) => player.seed === 3).length
   const startingSet = new Set(startingPlayerIds)
   const reserveCount = startingPlayerIds ? players.length - startingPlayerIds.length : 0
 
@@ -47,7 +50,7 @@ export function TeamPanel({
               {player.id.slice(-2)}
             </span>
             <span className="min-w-0 flex-1 truncate text-xs font-bold text-slate-200">
-              {player.name}
+              {getPlayerDisplayName(player)}
             </span>
             {startingPlayerIds && (
               <span
@@ -62,7 +65,8 @@ export function TeamPanel({
       </div>
       <div className="flex gap-4 border-t border-white/7 bg-white/[0.02] px-4 py-3 text-[11px] font-bold text-slate-500">
         <span>H1: {seedOne}</span>
-        <span>H2: {players.length - seedOne}</span>
+        <span>H2: {seedTwo}</span>
+        <span>H3: {seedThree}</span>
         <span>GK: {players.filter((player) => player.positionGroup === 'GK').length}</span>
         {startingPlayerIds && reserveCount > 0 && <span>Dự bị: {reserveCount}</span>}
       </div>

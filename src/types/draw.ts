@@ -1,5 +1,5 @@
 import type { QualityMetrics } from '../algorithms/scoreBalance'
-import type { Player } from './player'
+import type { Player, Seed } from './player'
 
 export interface PublishedAssignment {
   id: string
@@ -9,7 +9,7 @@ export interface PublishedAssignment {
   isStarting: boolean
   revealOrder: number
   playerName: string
-  seed: 1 | 2
+  seed: Seed
   position: Player['primaryPosition']
 }
 

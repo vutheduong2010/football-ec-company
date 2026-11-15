@@ -6,6 +6,7 @@ import type { PublishedAssignment, PublishedDraw } from '../../types/draw'
 import {
   POSITION_GROUPS,
   POSITIONS,
+  SEEDS,
   type Player,
   type Position,
   type Seed,
@@ -21,8 +22,10 @@ export interface PublishDrawInput {
   players: readonly Player[]
 }
 
-function isPosition(value: string): value is Position {
-  return POSITIONS.includes(value as Position)
+function normalizeSnapshotPosition(value: string): Position | null {
+  if (POSITIONS.includes(value as Position)) return value as Position
+  if (value === 'CAM' || value === 'LM' || value === 'RM') return 'CM'
+  return null
 }
 
 function toSnapshotPlayer(assignment: PublishedAssignment): Player {
@@ -38,8 +41,12 @@ function toSnapshotPlayer(assignment: PublishedAssignment): Player {
 }
 
 function mapAssignment(row: AssignmentRow): PublishedAssignment {
-  if (!isPosition(row.position_snapshot)) {
+  const position = normalizeSnapshotPosition(row.position_snapshot)
+  if (!position) {
     throw new Error('Kết quả đã lưu chứa vị trí không hợp lệ.')
+  }
+  if (!SEEDS.includes(row.seed_snapshot as Seed)) {
+    throw new Error('Kết quả đã lưu chứa hạt giống không hợp lệ.')
   }
 
   return {
@@ -51,7 +58,7 @@ function mapAssignment(row: AssignmentRow): PublishedAssignment {
     revealOrder: row.reveal_order,
     playerName: row.player_name_snapshot,
     seed: row.seed_snapshot as Seed,
-    position: row.position_snapshot,
+    position,
   }
 }
 

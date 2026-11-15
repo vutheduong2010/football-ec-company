@@ -1,4 +1,5 @@
 import type { Player } from '../../types/player'
+import { getPlayerDisplayName } from '../../features/players/playerDisplay'
 
 const TEAM_COLORS = ['#22c55e', '#60a5fa', '#fb923c'] as const
 const WHEEL_SIZE = 320
@@ -12,7 +13,7 @@ interface WheelPlayer {
 }
 
 function shortName(player: Player) {
-  const label = player.nickname?.trim() || player.name
+  const label = getPlayerDisplayName(player)
   return label.length > 12 ? `${label.slice(0, 11)}…` : label
 }
 
@@ -96,7 +97,9 @@ export function DrawWheel({
               ? 'Sẵn sàng'
               : status === 'completed'
                 ? 'Hoàn tất'
-                : (centerPlayer?.player.name ?? 'Đang chọn')}
+                : centerPlayer
+                  ? getPlayerDisplayName(centerPlayer.player)
+                  : 'Đang chọn'}
           </p>
           <p className="mt-0.5 text-[8px] font-bold uppercase tracking-wider text-slate-500">
             {status === 'paused'

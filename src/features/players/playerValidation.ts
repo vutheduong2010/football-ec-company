@@ -1,4 +1,4 @@
-import { POSITIONS, type PlayerInput, type Position } from '../../types/player'
+import { POSITIONS, SEEDS, type PlayerInput, type Position } from '../../types/player'
 
 export type PlayerValidationErrors = Partial<
   Record<'name' | 'nickname' | 'seed' | 'primaryPosition' | 'secondaryPositions', string>
@@ -13,7 +13,7 @@ export function validatePlayerInput(input: PlayerInput): PlayerValidationErrors 
   else if (name.length > 80) errors.name = 'Tên tối đa 80 ký tự.'
 
   if (nickname.length > 50) errors.nickname = 'Biệt danh tối đa 50 ký tự.'
-  if (input.seed !== 1 && input.seed !== 2) errors.seed = 'Hạt giống phải là 1 hoặc 2.'
+  if (!SEEDS.includes(input.seed)) errors.seed = 'Hạt giống phải là 1, 2 hoặc 3.'
   if (!POSITIONS.includes(input.primaryPosition))
     errors.primaryPosition = 'Vị trí chính không hợp lệ.'
 

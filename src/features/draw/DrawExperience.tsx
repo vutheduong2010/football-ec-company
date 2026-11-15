@@ -20,6 +20,7 @@ import { Notice } from '../../components/ui/Notice'
 import type { Player } from '../../types/player'
 import { defaultMatchTitle } from './drawFormat'
 import { publishDraw } from './drawService'
+import { getPlayerDisplayName } from '../players/playerDisplay'
 import { useDrawWheel } from './useDrawWheel'
 
 const TEAM_LABELS = ['A', 'B', 'C'] as const
@@ -143,7 +144,7 @@ export function DrawExperience({ result, players }: { result: BalanceResult; pla
               </span>
               <div className="min-w-0">
                 <p className="truncate text-sm font-black text-white">
-                  {latestWheelPlayer.player.name}
+                  {getPlayerDisplayName(latestWheelPlayer.player)}
                 </p>
                 <p className="mt-0.5 text-[11px] font-bold text-slate-500">
                   Vừa vào Đội {latestTeam} • {latestWheelPlayer.player.primaryPosition}
@@ -201,7 +202,7 @@ export function DrawExperience({ result, players }: { result: BalanceResult; pla
 
       <div aria-live="polite" aria-atomic="true" className="sr-only">
         {latestWheelPlayer
-          ? `${latestWheelPlayer.player.name} vào Đội ${latestTeam}. Đã reveal ${wheel.revealedCount} trên ${result.revealSequence.length} cầu thủ.`
+          ? `${getPlayerDisplayName(latestWheelPlayer.player)} vào Đội ${latestTeam}. Đã reveal ${wheel.revealedCount} trên ${result.revealSequence.length} cầu thủ.`
           : statusLabel}
       </div>
 

@@ -23,7 +23,7 @@ import { useAuth } from '../hooks/useAuth'
 import { usePlayers } from '../hooks/usePlayers'
 import type { Player, PlayerInput, PositionGroup } from '../types/player'
 
-type SeedFilter = 'all' | '1' | '2'
+type SeedFilter = 'all' | '1' | '2' | '3'
 type GroupFilter = 'all' | PositionGroup
 type StatusFilter = 'all' | 'active' | 'inactive'
 
@@ -179,6 +179,7 @@ export function PlayersPage() {
                 <option value="all">Mọi hạt giống</option>
                 <option value="1">Hạt giống 1</option>
                 <option value="2">Hạt giống 2</option>
+                <option value="3">Hạt giống 3</option>
               </select>
             </label>
             <label>
@@ -222,6 +223,9 @@ export function PlayersPage() {
             </Badge>
             <Badge>
               H2: {players.filter((player) => player.isActive && player.seed === 2).length}
+            </Badge>
+            <Badge tone="orange">
+              H3: {players.filter((player) => player.isActive && player.seed === 3).length}
             </Badge>
           </div>
         </div>

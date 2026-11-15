@@ -1,6 +1,7 @@
 import { forwardRef } from 'react'
 
 import { TEAM_LABELS, formatMatchDate } from '../../features/draw/drawFormat'
+import { getPlayerDisplayName } from '../../features/players/playerDisplay'
 import type { PublishedDraw } from '../../types/draw'
 
 const TEAM_ACCENTS = [
@@ -62,7 +63,7 @@ export const ExportResultCard = forwardRef<HTMLDivElement, { draw: PublishedDraw
                         {player.primaryPosition}
                       </span>
                       <span className="min-w-0 flex-1 truncate text-xs font-bold text-slate-100">
-                        {player.name}
+                        {getPlayerDisplayName(player)}
                       </span>
                       {!startingSet.has(player.id) && (
                         <span className="text-[9px] font-black uppercase text-orange-300">
@@ -81,7 +82,7 @@ export const ExportResultCard = forwardRef<HTMLDivElement, { draw: PublishedDraw
           {[
             ['Cân bằng', `${draw.qualityMetrics.qualityScore}%`],
             ['Quân số', draw.qualityMetrics.sizeRange === 0 ? 'Cân tuyệt đối' : 'Lệch 1'],
-            ['Hạt giống', `Lệch ${draw.qualityMetrics.seedOneRange}`],
+            ['Hạt giống', `Lệch ${draw.qualityMetrics.maxSeedRange}`],
             ['Thủ môn', `Lệch ${draw.qualityMetrics.goalkeeperRange}`],
           ].map(([label, value]) => (
             <div

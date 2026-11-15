@@ -13,7 +13,7 @@ function makePlayers(
     return {
       id: `player-${index + 1}`,
       name: `Cầu thủ ${index + 1}`,
-      seed: (index % 2 === 0 ? 1 : 2) as Seed,
+      seed: ((index % 3) + 1) as Seed,
       primaryPosition,
       secondaryPositions: [],
       positionGroup: POSITION_GROUPS[primaryPosition],
@@ -66,7 +66,7 @@ describe('balanceTeams', () => {
     )
 
     expect([...result.capacities].sort((left, right) => left - right)).toEqual(expectedSizes)
-    expect(result.qualityMetrics.seedOneRange).toBeLessThanOrEqual(1)
+    expect(result.qualityMetrics.maxSeedRange).toBeLessThanOrEqual(1)
   })
 
   it.each([
@@ -98,6 +98,7 @@ describe('balanceTeams', () => {
   it.each([
     ['toàn bộ seed 1', () => 1 as const],
     ['toàn bộ seed 2', () => 2 as const],
+    ['toàn bộ seed 3', () => 3 as const],
     ['1 seed 1 và 20 seed 2', (index: number) => (index === 0 ? (1 as const) : (2 as const))],
   ])('xử lý đầu vào %s', (_, getSeed) => {
     const players = makePlayers(21, (index) => ({ seed: getSeed(index) }))
@@ -202,7 +203,7 @@ describe('balanceTeams', () => {
           .slice(0, random.int(3))
         return {
           id: `case-${caseIndex}-player-${index}`,
-          seed: (random.next() < 0.45 ? 1 : 2) as Seed,
+          seed: (random.int(3) + 1) as Seed,
           primaryPosition,
           secondaryPositions,
           positionGroup: POSITION_GROUPS[primaryPosition],

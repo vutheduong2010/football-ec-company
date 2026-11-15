@@ -200,7 +200,8 @@ export function PlayerFormDialog({
                 className={inputClass}
               >
                 <option value={1}>Hạt giống 1 — mạnh</option>
-                <option value={2}>Hạt giống 2 — yếu</option>
+                <option value={2}>Hạt giống 2 — trung bình</option>
+                <option value={3}>Hạt giống 3 — yếu</option>
               </select>
             </label>
 

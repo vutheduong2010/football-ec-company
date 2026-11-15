@@ -14,7 +14,7 @@ vi.mock('../../lib/supabaseClient', () => ({
 type SessionRow = Database['public']['Tables']['draw_sessions']['Row']
 type AssignmentRow = Database['public']['Tables']['draw_assignments']['Row']
 
-const positions: Position[] = ['GK', 'CB', 'LB', 'CM', 'CAM', 'RM', 'ST']
+const positions: Position[] = ['GK', 'CB', 'LB', 'RB', 'CM', 'ST']
 
 function makePlayers(count = 14): Player[] {
   return Array.from({ length: count }, (_, index) => {
@@ -22,7 +22,8 @@ function makePlayers(count = 14): Player[] {
     return {
       id: `00000000-0000-4000-8000-${String(index + 1).padStart(12, '0')}`,
       name: `Cầu thủ ${index + 1}`,
-      seed: (index % 2 === 0 ? 1 : 2) as Seed,
+      nickname: index === 0 ? 'Người gác đền' : undefined,
+      seed: ((index % 3) + 1) as Seed,
       primaryPosition,
       secondaryPositions: [],
       positionGroup: POSITION_GROUPS[primaryPosition],
@@ -40,7 +41,7 @@ function makeSession(): SessionRow {
     field_size: 7,
     status: 'published',
     created_by: '20000000-0000-4000-8000-000000000001',
-    algorithm_version: 'balanced-candidates-v1',
+    algorithm_version: 'balanced-candidates-v2',
     draw_seed: 'test-seed',
     created_at: '2026-11-14T10:00:00.000Z',
     published_at: '2026-11-14T10:05:00.000Z',
@@ -59,7 +60,7 @@ describe('drawService', () => {
       team_index: index % 2,
       is_starting: index < 12,
       reveal_order: index,
-      player_name_snapshot: player.name,
+      player_name_snapshot: player.nickname ?? player.name,
       seed_snapshot: player.seed,
       position_snapshot: player.primaryPosition,
     }))
@@ -71,6 +72,7 @@ describe('drawService', () => {
     expect(draw.teams[0].reservePlayerIds).toHaveLength(1)
     expect(draw.teams[1].reservePlayerIds).toHaveLength(1)
     expect(draw.qualityMetrics.sizeRange).toBe(0)
+    expect(draw.teams[0].players[0].name).toBe('Người gác đền')
   })
 
   it('gọi RPC publish_draw đúng một lần với assignments đã khóa', async () => {

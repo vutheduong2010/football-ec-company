@@ -2,7 +2,7 @@ import { createSeededRandom, type SeededRandom } from './seededRandom'
 import { scoreBalance, type QualityMetrics } from './scoreBalance'
 import { POSITION_GROUPS, type Player, type PositionGroup } from '../types/player'
 
-export const ALGORITHM_VERSION = 'balanced-candidates-v1'
+export const ALGORITHM_VERSION = 'balanced-candidates-v2'
 
 export type TeamCount = 2 | 3
 
@@ -73,9 +73,7 @@ function playerPriority(player: Player) {
   const secondaryGroups = new Set(
     player.secondaryPositions.map((position) => POSITION_GROUPS[position]),
   )
-  return (
-    (player.positionGroup === 'GK' ? 100 : 0) + (player.seed === 1 ? 18 : 0) + secondaryGroups.size
-  )
+  return (player.positionGroup === 'GK' ? 100 : 0) + (4 - player.seed) * 6 + secondaryGroups.size
 }
 
 function assignmentCost(
@@ -226,7 +224,7 @@ function buildWarnings(
           : 'Phân bố vị trí chưa đồng đều hoàn toàn; nên kiểm tra vai trò phụ trước khi đá.',
     })
   }
-  if (uniqueSeeds.size === 1 || qualityMetrics.seedOneRange > 1) {
+  if (uniqueSeeds.size === 1 || qualityMetrics.maxSeedRange > 1) {
     warnings.push({
       code: 'SEED_DISTRIBUTION_LIMITED',
       message: 'Phân bố hạt giống đầu vào hạn chế nên không thể cân bằng tuyệt đối.',

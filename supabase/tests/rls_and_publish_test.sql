@@ -1,7 +1,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(21);
+select plan(22);
 
 insert into auth.users (
   id,
@@ -46,12 +46,13 @@ values ('00000000-0000-4000-8000-000000000001');
 insert into public.players (
   id,
   name,
+  nickname,
   seed,
   primary_position,
   secondary_positions
 ) values
-  ('10000000-0000-4000-8000-000000000001', 'Test GK', 1, 'GK', '{}'),
-  ('10000000-0000-4000-8000-000000000002', 'Test ST', 2, 'ST', '{CAM}');
+  ('10000000-0000-4000-8000-000000000001', 'Test GK', null, 1, 'GK', '{}'),
+  ('10000000-0000-4000-8000-000000000002', 'Test ST', 'Sát thủ', 3, 'ST', '{CM}');
 
 insert into public.draw_sessions (
   id,
@@ -68,7 +69,7 @@ insert into public.draw_sessions (
     '20000000-0000-4000-8000-000000000001',
     'Published fixture',
     current_date,
-    2,
+    3,
     'published',
     '00000000-0000-4000-8000-000000000001',
     'test-v1',
@@ -114,6 +115,16 @@ insert into public.draw_assignments (
     2,
     'ST'
   );
+
+select is(
+  (
+    select player_name_snapshot
+    from public.draw_assignments
+    where session_id = '20000000-0000-4000-8000-000000000002'
+  ),
+  'Sát thủ',
+  'assignment snapshot prefers nickname over player name'
+);
 
 select is(
   (select relrowsecurity from pg_class where oid = 'public.app_admins'::regclass),

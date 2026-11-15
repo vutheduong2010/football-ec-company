@@ -1,8 +1,9 @@
-export type Seed = 1 | 2
-export type Position = 'GK' | 'CB' | 'LB' | 'RB' | 'CM' | 'CAM' | 'LM' | 'RM' | 'ST'
+export type Seed = 1 | 2 | 3
+export type Position = 'GK' | 'CB' | 'LB' | 'RB' | 'CM' | 'ST'
 export type PositionGroup = 'GK' | 'DEF' | 'MID' | 'ATT'
 
-export const POSITIONS: Position[] = ['GK', 'CB', 'LB', 'RB', 'CM', 'CAM', 'LM', 'RM', 'ST']
+export const SEEDS: Seed[] = [1, 2, 3]
+export const POSITIONS: Position[] = ['GK', 'CB', 'LB', 'RB', 'CM', 'ST']
 
 export const POSITION_GROUPS: Record<Position, PositionGroup> = {
   GK: 'GK',
@@ -10,9 +11,6 @@ export const POSITION_GROUPS: Record<Position, PositionGroup> = {
   LB: 'DEF',
   RB: 'DEF',
   CM: 'MID',
-  CAM: 'MID',
-  LM: 'MID',
-  RM: 'MID',
   ST: 'ATT',
 }
 

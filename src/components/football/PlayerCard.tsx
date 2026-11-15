@@ -26,11 +26,14 @@ export function PlayerCard({
       <span className="min-w-0 flex-1 text-left">
         <span className="flex flex-wrap items-center gap-2">
           <span className="truncate text-sm font-extrabold text-white">{player.name}</span>
-          <Badge tone={player.seed === 1 ? 'green' : 'slate'}>H{player.seed}</Badge>
+          <Badge tone={player.seed === 1 ? 'green' : player.seed === 2 ? 'blue' : 'orange'}>
+            H{player.seed}
+          </Badge>
           {!player.isActive && <Badge tone="red">Đã ẩn</Badge>}
         </span>
         <span className="mt-1 block truncate text-xs text-slate-500">
-          {player.nickname} • {player.primaryPosition}
+          {player.nickname ? `${player.nickname} • ` : ''}
+          {player.primaryPosition}
           {player.secondaryPositions.length > 0
             ? ` / ${player.secondaryPositions.join(' / ')}`
             : ''}

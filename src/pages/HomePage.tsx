@@ -15,6 +15,7 @@ import { buttonClass } from '../components/ui/buttonStyles'
 import { Card } from '../components/ui/Card'
 import { mockPublishedDraw } from '../data/mockPublishedDraw'
 import { TEAM_LABELS, formatMatchDate } from '../features/draw/drawFormat'
+import { getPlayerDisplayName } from '../features/players/playerDisplay'
 import { usePlayers } from '../hooks/usePlayers'
 import { usePublishedDraws } from '../hooks/usePublishedDraws'
 
@@ -140,7 +141,7 @@ export function HomePage() {
                       {team.players.slice(0, 5).map((player) => (
                         <span
                           key={player.id}
-                          title={player.name}
+                          title={getPlayerDisplayName(player)}
                           className="grid size-9 place-items-center rounded-full border-2 border-panel bg-slate-700 text-[9px] font-black text-white"
                         >
                           {player.primaryPosition}
@@ -183,7 +184,7 @@ export function HomePage() {
             <div className="mt-5 space-y-3">
               {[
                 ['Quân số', latest.qualityMetrics.sizeRange === 0 ? 'Cân tuyệt đối' : 'Lệch 1'],
-                ['Hạt giống 1', `Lệch ${latest.qualityMetrics.seedOneRange}`],
+                ['Ba hạt giống', `Lệch tối đa ${latest.qualityMetrics.maxSeedRange}`],
                 ['Thủ môn', `Lệch ${latest.qualityMetrics.goalkeeperRange}`],
               ].map(([label, value]) => (
                 <div

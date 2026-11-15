@@ -3,6 +3,7 @@ import type { Database } from '../../types/database'
 import {
   POSITION_GROUPS,
   POSITIONS,
+  SEEDS,
   type Player,
   type PlayerInput,
   type Position,
@@ -22,16 +23,21 @@ function isPosition(value: string): value is Position {
   return POSITIONS.includes(value as Position)
 }
 
+function isSeed(value: number): value is Seed {
+  return SEEDS.includes(value as Seed)
+}
+
 export function mapPlayerRow(row: PlayerRow): Player {
   if (!isPosition(row.primary_position))
     throw new Error('Database trả về vị trí chính không hợp lệ.')
+  if (!isSeed(row.seed)) throw new Error('Database trả về hạt giống không hợp lệ.')
   const secondary = row.secondary_positions.filter(isPosition)
 
   return {
     id: row.id,
     name: row.name,
     nickname: row.nickname ?? undefined,
-    seed: row.seed as Seed,
+    seed: row.seed,
     primaryPosition: row.primary_position,
     secondaryPositions: secondary,
     positionGroup: POSITION_GROUPS[row.primary_position],

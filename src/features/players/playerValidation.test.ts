@@ -8,7 +8,7 @@ const validInput: PlayerInput = {
   nickname: 'Test',
   seed: 1,
   primaryPosition: 'CM',
-  secondaryPositions: ['CAM', 'ST'],
+  secondaryPositions: ['CB', 'ST'],
   isActive: true,
 }
 
@@ -22,9 +22,14 @@ describe('playerValidation', () => {
       validatePlayerInput({ ...validInput, secondaryPositions: ['CM'] }).secondaryPositions,
     ).toBeTruthy()
     expect(
-      validatePlayerInput({ ...validInput, secondaryPositions: ['CAM', 'ST', 'LB'] })
+      validatePlayerInput({ ...validInput, secondaryPositions: ['CB', 'ST', 'LB'] })
         .secondaryPositions,
     ).toBeTruthy()
+  })
+
+  it('chấp nhận đủ ba hạt giống và từ chối giá trị ngoài danh sách', () => {
+    expect(validatePlayerInput({ ...validInput, seed: 3 })).toEqual({})
+    expect(validatePlayerInput({ ...validInput, seed: 4 as never }).seed).toBeTruthy()
   })
 
   it('chuẩn hóa khoảng trắng và biệt danh rỗng', () => {

@@ -183,10 +183,12 @@ function AdminDrawWorkspace({ players }: { players: Player[] }) {
               </div>
             </fieldset>
 
-            <div className="mt-5 grid grid-cols-3 gap-2">
+            <div className="mt-5 grid grid-cols-2 gap-2 sm:grid-cols-5">
               {[
                 ['Mỗi đội', `${estimated}${remainder ? `–${estimated + 1}` : ''}`],
-                ['Hạt giống 1', selectedPlayers.filter((player) => player.seed === 1).length],
+                ['Mạnh · H1', selectedPlayers.filter((player) => player.seed === 1).length],
+                ['TB · H2', selectedPlayers.filter((player) => player.seed === 2).length],
+                ['Yếu · H3', selectedPlayers.filter((player) => player.seed === 3).length],
                 ['Thủ môn', gkCount],
               ].map(([label, value]) => (
                 <div key={label} className="rounded-xl bg-white/4 p-3 text-center">
@@ -293,7 +295,7 @@ function AdminDrawWorkspace({ players }: { players: Player[] }) {
                     'Số lượng',
                     activePreview.qualityMetrics.sizeRange === 0 ? 'Cân tuyệt đối' : 'Lệch 1',
                   ],
-                  ['Hạt giống 1', `Lệch ${activePreview.qualityMetrics.seedOneRange}`],
+                  ['Ba hạt giống', `Lệch tối đa ${activePreview.qualityMetrics.maxSeedRange}`],
                   ['Thủ môn', `Lệch ${activePreview.qualityMetrics.goalkeeperRange}`],
                   ['Thuật toán', activePreview.algorithmVersion],
                 ].map(([label, value]) => (
