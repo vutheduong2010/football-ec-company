@@ -3,7 +3,12 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { balanceTeams } from '../../algorithms/balanceTeams'
 import type { Database } from '../../types/database'
 import { POSITION_GROUPS, type Player, type Position, type Seed } from '../../types/player'
-import { buildPublishedDraw, deletePublishedDraw, publishDraw } from './drawService'
+import {
+  buildPublishedDraw,
+  deletePublishedDraw,
+  publishDraw,
+  setPublishedDrawResult,
+} from './drawService'
 
 const { rpcMock } = vi.hoisted(() => ({ rpcMock: vi.fn() }))
 
@@ -45,6 +50,8 @@ function makeSession(): SessionRow {
     draw_seed: 'test-seed',
     created_at: '2026-11-14T10:00:00.000Z',
     published_at: '2026-11-14T10:05:00.000Z',
+    team_scores: [2, 2],
+    team_rankings: null,
   }
 }
 
@@ -75,6 +82,23 @@ describe('drawService', () => {
     expect(draw.qualityMetrics.sizeRange).toBe(0)
     expect(draw.teams[0].players[0].name).toBe('Người gác đền')
     expect(draw.teams[0].players[0].secondaryPositions).toEqual(['CB'])
+    expect(draw.teamScores).toEqual([2, 2])
+    expect(draw.teamRankings).toBeNull()
+  })
+
+  it('gọi RPC lưu tỉ số sau trận dành cho admin', async () => {
+    rpcMock.mockResolvedValue({ data: true, error: null })
+
+    await setPublishedDrawResult('10000000-0000-4000-8000-000000000001', {
+      teamScores: [4, 2],
+      teamRankings: null,
+    })
+
+    expect(rpcMock).toHaveBeenCalledWith('set_published_draw_result', {
+      p_session_id: '10000000-0000-4000-8000-000000000001',
+      p_team_scores: [4, 2],
+      p_team_rankings: null,
+    })
   })
 
   it('gọi RPC xóa kết quả dành cho admin', async () => {

@@ -67,6 +67,8 @@ Hồ sơ cầu thủ dùng ba hạt giống `1` (mạnh), `2` (trung bình), `3`
 
 Migration `202611150003_lineup_positions_and_admin_delete.sql` snapshot tối đa ba vị trí phụ trong kết quả công bố và thêm RPC `delete_published_draw` chỉ dành cho admin.
 
+Migration `202611150004_post_match_results.sql` bổ sung tỉ số cho trận hai đội, thứ hạng cho bảng ba đội và RPC `set_published_draw_result` chỉ dành cho admin.
+
 RLS là lớp bảo mật thật. `isAdmin` trong React chỉ dùng để điều chỉnh UX.
 
 ## 6. Kiểm tra trước khi dùng production

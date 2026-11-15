@@ -1,7 +1,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(28);
+select plan(33);
 
 insert into auth.users (
   id,
@@ -218,6 +218,16 @@ select throws_ok(
   'Admin access required.',
   'authenticated non-admin cannot delete a published result'
 );
+select throws_ok(
+  $$select public.set_published_draw_result(
+    '20000000-0000-4000-8000-000000000001',
+    null,
+    array[0, 1, 2]::smallint[]
+  )$$,
+  '42501',
+  'Admin access required.',
+  'authenticated non-admin cannot set a post-match result'
+);
 
 reset role;
 set local role authenticated;
@@ -308,6 +318,50 @@ select is(
   ),
   array['CM']::text[],
   'publish snapshots secondary positions for deterministic lineup placement'
+);
+select lives_ok(
+  $$select public.set_published_draw_result(
+    '20000000-0000-4000-8000-000000000001',
+    null,
+    array[2, 0, 1]::smallint[]
+  )$$,
+  'admin can save a three-team ranking'
+);
+select is(
+  (
+    select team_rankings
+    from public.draw_sessions
+    where id = '20000000-0000-4000-8000-000000000001'
+  ),
+  array[2, 0, 1]::smallint[],
+  'three-team ranking is stored in finishing order'
+);
+select throws_ok(
+  $$select public.set_published_draw_result(
+    '20000000-0000-4000-8000-000000000001',
+    null,
+    array[0, 0, 2]::smallint[]
+  )$$,
+  '22023',
+  'A three-team result requires unique rankings for teams 0, 1 and 2.',
+  'duplicate teams are rejected in a ranking'
+);
+select lives_ok(
+  $$select public.set_published_draw_result(
+    (select id from public.draw_sessions where title = 'Atomic published session'),
+    array[3, 1]::smallint[],
+    null
+  )$$,
+  'admin can save a two-team score'
+);
+select is(
+  (
+    select team_scores
+    from public.draw_sessions
+    where title = 'Atomic published session'
+  ),
+  array[3, 1]::smallint[],
+  'two-team score is stored by team index'
 );
 
 reset role;

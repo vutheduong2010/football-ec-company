@@ -61,8 +61,10 @@ export function TeamPanel({
           <div
             key={player.id}
             className={`flex items-center gap-3 px-3 py-2.5 transition ${
-              dropTargetPlayerId === player.id ? 'bg-white/8 ring-1 ring-inset ring-white/25' : ''
-            } ${draggedPlayerId === player.id ? 'opacity-55' : ''}`}
+              dropTargetPlayerId === player.id
+                ? 'relative z-10 scale-[1.015] bg-brand-400/18 ring-2 ring-inset ring-brand-200 shadow-[0_0_24px_rgba(74,222,128,0.45)]'
+                : ''
+            } ${draggedPlayerId === player.id ? 'opacity-35' : ''}`}
             data-lineup-drop-player-id={enablePlayerSwap ? player.id : undefined}
           >
             <span

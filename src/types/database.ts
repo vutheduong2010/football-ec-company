@@ -56,6 +56,8 @@ export type Database = {
           draw_seed: string
           created_at: string
           published_at: string | null
+          team_scores: number[] | null
+          team_rankings: number[] | null
         }
         Insert: {
           id?: string
@@ -69,6 +71,8 @@ export type Database = {
           draw_seed: string
           created_at?: string
           published_at?: string | null
+          team_scores?: number[] | null
+          team_rankings?: number[] | null
         }
         Update: {
           title?: string
@@ -78,6 +82,8 @@ export type Database = {
           algorithm_version?: string
           draw_seed?: string
           published_at?: string | null
+          team_scores?: number[] | null
+          team_rankings?: number[] | null
         }
         Relationships: []
       }
@@ -130,6 +136,14 @@ export type Database = {
           p_assignments: Json
         }
         Returns: string
+      }
+      set_published_draw_result: {
+        Args: {
+          p_session_id: string
+          p_team_scores: number[] | null
+          p_team_rankings: number[] | null
+        }
+        Returns: boolean
       }
     }
     Enums: Record<string, never>

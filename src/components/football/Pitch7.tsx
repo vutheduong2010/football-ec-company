@@ -40,9 +40,9 @@ export function Pitch7({
           key={player.id}
           className={`absolute w-20 -translate-x-1/2 -translate-y-1/2 touch-none select-none text-center transition ${
             draggedPlayerId === player.id
-              ? 'z-20 scale-105 cursor-grabbing opacity-55'
+              ? 'z-20 scale-95 cursor-grabbing opacity-35 ring-2 ring-dashed ring-white/60'
               : 'cursor-grab'
-          } ${dropTargetPlayerId === player.id ? 'z-10 rounded-xl bg-white/12 ring-2 ring-white/70' : ''}`}
+          } ${dropTargetPlayerId === player.id ? 'z-30 scale-110 rounded-xl bg-brand-400/25 ring-4 ring-brand-200 shadow-[0_0_32px_rgba(74,222,128,0.9)]' : ''}`}
           style={{ left: slot.left, top: slot.top }}
           title={`${getPlayerDisplayName(player)} — ${slot.position} (${preference === 'primary' ? 'vị trí chính' : preference === 'secondary' ? 'vị trí phụ' : 'xếp linh hoạt'})`}
           data-position-preference={preference}

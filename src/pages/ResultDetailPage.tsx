@@ -9,6 +9,7 @@ import {
 } from '../algorithms/arrangeLineup'
 import { ExportResultCard } from '../components/football/ExportResultCard'
 import { Pitch7 } from '../components/football/Pitch7'
+import { PlayerAvatar } from '../components/football/PlayerAvatar'
 import { TeamPanel } from '../components/football/TeamPanel'
 import { Badge } from '../components/ui/Badge'
 import { Button } from '../components/ui/Button'
@@ -19,6 +20,7 @@ import { StatusState } from '../components/ui/StatusState'
 import { mockPublishedDraw } from '../data/mockPublishedDraw'
 import { TEAM_LABELS, formatMatchDate } from '../features/draw/drawFormat'
 import { deletePublishedDraw } from '../features/draw/drawService'
+import { getPlayerDisplayName } from '../features/players/playerDisplay'
 import { useAuth } from '../hooks/useAuth'
 import { usePublishedDraw } from '../hooks/usePublishedDraw'
 
@@ -51,6 +53,7 @@ export function ResultDetailPage() {
   } | null>(null)
   const [draggedPlayerId, setDraggedPlayerId] = useState<string | null>(null)
   const [dropTargetPlayerId, setDropTargetPlayerId] = useState<string | null>(null)
+  const [dragPointer, setDragPointer] = useState<{ x: number; y: number } | null>(null)
   const exportRef = useRef<HTMLDivElement>(null)
   const defaultLineups = useMemo<TeamLineups>(() => {
     if (!draw) return {}
@@ -98,6 +101,12 @@ export function ResultDetailPage() {
   const activeStartingPlayerIds = Object.values(activeLineupPlayerIds).filter(
     (playerId): playerId is string => Boolean(playerId),
   )
+  const draggedPlayer = draggedPlayerId
+    ? activeTeam.players.find((player) => player.id === draggedPlayerId)
+    : undefined
+  const dropTargetPlayer = dropTargetPlayerId
+    ? activeTeam.players.find((player) => player.id === dropTargetPlayerId)
+    : undefined
   const displayedDraw = {
     ...draw,
     teams: draw.teams.map((team) => {
@@ -197,12 +206,14 @@ export function ResultDetailPage() {
     event.currentTarget.setPointerCapture(event.pointerId)
     setDraggedPlayerId(playerId)
     setDropTargetPlayerId(null)
+    setDragPointer({ x: event.clientX, y: event.clientY })
   }
 
   const handleLineupPointerMove = (event: ReactPointerEvent<HTMLDivElement>) => {
     if (!draggedPlayerId) return
     const targetPlayerId = findDropTarget(event.clientX, event.clientY)
     setDropTargetPlayerId(targetPlayerId === draggedPlayerId ? null : targetPlayerId)
+    setDragPointer({ x: event.clientX, y: event.clientY })
   }
 
   const finishLineupDrag = (event: ReactPointerEvent<HTMLDivElement>) => {
@@ -222,6 +233,7 @@ export function ResultDetailPage() {
     }
     setDraggedPlayerId(null)
     setDropTargetPlayerId(null)
+    setDragPointer(null)
   }
 
   const cancelLineupDrag = (event: ReactPointerEvent<HTMLDivElement>) => {
@@ -230,6 +242,7 @@ export function ResultDetailPage() {
     }
     setDraggedPlayerId(null)
     setDropTargetPlayerId(null)
+    setDragPointer(null)
   }
 
   return (
@@ -318,6 +331,7 @@ export function ResultDetailPage() {
                     setActiveTeamIndex(team.teamIndex)
                     setDraggedPlayerId(null)
                     setDropTargetPlayerId(null)
+                    setDragPointer(null)
                   }}
                   className={`min-h-11 rounded-lg text-sm font-black transition focus-ring ${active ? activeClass : 'text-slate-500 hover:text-white'}`}
                   aria-pressed={active}
@@ -376,6 +390,40 @@ export function ResultDetailPage() {
           </Card>
         </div>
       </div>
+
+      {draggedPlayer && dragPointer && (
+        <div
+          className="pointer-events-none fixed z-[100]"
+          style={{
+            left: dragPointer.x,
+            top: dragPointer.y,
+            transform: 'translate(-50%, calc(-100% - 22px))',
+          }}
+          aria-hidden="true"
+        >
+          <div
+            className={`flex min-w-48 items-center gap-3 rounded-2xl border px-3 py-2.5 shadow-2xl backdrop-blur-xl transition ${
+              dropTargetPlayer
+                ? 'border-brand-300/80 bg-brand-950/95 shadow-[0_0_32px_rgba(74,222,128,0.45)]'
+                : 'border-white/20 bg-ink-950/95'
+            }`}
+          >
+            <PlayerAvatar className="size-10 rounded-xl ring-2 ring-white/15" />
+            <div className="min-w-0">
+              <p className="max-w-40 truncate text-xs font-black text-white">
+                {getPlayerDisplayName(draggedPlayer)}
+              </p>
+              <p
+                className={`mt-0.5 text-[10px] font-bold ${dropTargetPlayer ? 'text-brand-200' : 'text-slate-400'}`}
+              >
+                {dropTargetPlayer
+                  ? `Đổi với ${getPlayerDisplayName(dropTargetPlayer)}`
+                  : 'Thả vào một cầu thủ khác'}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="pointer-events-none fixed left-[-10000px] top-0" aria-hidden="true">
         <ExportResultCard ref={exportRef} draw={displayedDraw} />

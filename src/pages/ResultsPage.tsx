@@ -1,5 +1,5 @@
-import { CalendarDays, ChevronRight, Clock3, Trash2, Trophy, Users } from 'lucide-react'
-import { useState } from 'react'
+import { CalendarDays, ChevronRight, Clock3, PencilLine, Trash2, Trophy, Users } from 'lucide-react'
+import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 
 import { Badge } from '../components/ui/Badge'
@@ -10,16 +10,57 @@ import { PageHeader } from '../components/ui/PageHeader'
 import { StatusState } from '../components/ui/StatusState'
 import { mockPublishedDraw } from '../data/mockPublishedDraw'
 import { formatMatchDate } from '../features/draw/drawFormat'
-import { deletePublishedDraw } from '../features/draw/drawService'
+import {
+  deletePublishedDraw,
+  setPublishedDrawResult,
+  type PostMatchResultInput,
+} from '../features/draw/drawService'
+import { MatchResultDialog } from '../features/results/MatchResultDialog'
+import { MatchResultSummary } from '../features/results/MatchResultSummary'
 import { useAuth } from '../hooks/useAuth'
 import { usePublishedDraws } from '../hooks/usePublishedDraws'
+import type { PublishedDraw } from '../types/draw'
 
 export function ResultsPage() {
   const { isAdmin } = useAuth()
   const { draws: remoteDraws, isLoading, error, refresh, isDemo } = usePublishedDraws()
-  const draws = isDemo ? [mockPublishedDraw] : remoteDraws
+  const draws = useMemo(
+    () =>
+      [...(isDemo ? [mockPublishedDraw] : remoteDraws)].sort(
+        (left, right) =>
+          right.matchDate.localeCompare(left.matchDate) ||
+          right.publishedAt.localeCompare(left.publishedAt),
+      ),
+    [isDemo, remoteDraws],
+  )
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [deleteError, setDeleteError] = useState<string | null>(null)
+  const [editingDraw, setEditingDraw] = useState<PublishedDraw | null>(null)
+  const [isSavingResult, setIsSavingResult] = useState(false)
+  const [resultError, setResultError] = useState<string | null>(null)
+
+  const openResultDialog = (draw: PublishedDraw) => {
+    if (!isAdmin || isDemo) return
+    setResultError(null)
+    setEditingDraw(draw)
+  }
+
+  const handleSaveResult = async (result: PostMatchResultInput) => {
+    if (!editingDraw || !isAdmin || isDemo) return
+    setIsSavingResult(true)
+    setResultError(null)
+    try {
+      await setPublishedDrawResult(editingDraw.id, result)
+      await refresh()
+      setEditingDraw(null)
+    } catch (requestError) {
+      setResultError(
+        requestError instanceof Error ? requestError.message : 'Không thể lưu kết quả sau trận.',
+      )
+    } finally {
+      setIsSavingResult(false)
+    }
+  }
 
   const handleDelete = async (drawId: string, title: string) => {
     if (!isAdmin || isDemo) return
@@ -44,8 +85,8 @@ export function ResultsPage() {
     <div>
       <PageHeader
         eyebrow={isDemo ? 'Dữ liệu minh họa' : 'Đồng bộ Supabase'}
-        title="Kết quả đã công bố"
-        description="Mở lại đội hình bất biến, tải ảnh PNG hoặc chia sẻ đường dẫn cho mọi người trong đội."
+        title="Lịch sử thi đấu"
+        description="Theo dõi tỉ số hai đội hoặc bảng xếp hạng ba đội theo từng ngày thi đấu."
       />
 
       {deleteError && (
@@ -68,9 +109,9 @@ export function ResultsPage() {
           <span className="mx-auto grid size-14 place-items-center rounded-2xl bg-white/5 text-slate-500">
             <Trophy className="size-6" />
           </span>
-          <h2 className="mt-4 text-lg font-black text-white">Chưa có kết quả nào được công bố</h2>
+          <h2 className="mt-4 text-lg font-black text-white">Chưa có trận đấu nào</h2>
           <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-500">
-            Admin cần hoàn tất vòng quay và xác nhận publish. Viewer không thể thấy bản nháp.
+            Kết quả sẽ xuất hiện tại đây sau khi admin hoàn tất vòng quay và công bố đội hình.
           </p>
           <Link
             to="/draw"
@@ -80,61 +121,88 @@ export function ResultsPage() {
           </Link>
         </Card>
       ) : (
-        <div className="grid gap-4 xl:grid-cols-3">
-          {draws.map((draw, index) => (
-            <Card
-              key={draw.id}
-              className="group overflow-hidden transition hover:-translate-y-0.5 hover:border-white/14"
-            >
-              <Link to={`/results/${draw.id}`} className="block rounded-2xl focus-ring">
-                <div className="relative border-b border-white/7 p-5">
-                  <div className="absolute right-4 top-4 text-5xl font-black text-white/[0.025]">
-                    {String(index + 1).padStart(2, '0')}
+        <div
+          className="max-h-[540px] space-y-3 overflow-y-auto overscroll-contain pr-1 [scrollbar-gutter:stable]"
+          aria-label="Danh sách lịch sử thi đấu"
+        >
+          {draws.map((draw) => (
+            <Card key={draw.id} className="overflow-hidden">
+              <div className="overflow-x-auto overscroll-x-contain">
+                <article className="grid min-w-[820px] grid-cols-[minmax(210px,1.1fr)_minmax(280px,1.3fr)_170px_250px] items-center divide-x divide-white/7 lg:min-w-0 lg:grid-cols-[minmax(200px,1.1fr)_minmax(270px,1.3fr)_160px_auto]">
+                  <div className="p-4 sm:p-5">
+                    <div className="flex items-center gap-2">
+                      <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-brand-400/10 text-brand-300">
+                        <Trophy className="size-4" />
+                      </span>
+                      <div className="min-w-0">
+                        <h2 className="truncate text-sm font-black text-white">{draw.title}</h2>
+                        <p className="mt-1 flex items-center gap-1.5 text-xs text-slate-500">
+                          <CalendarDays className="size-3.5" /> {formatMatchDate(draw.matchDate)}
+                        </p>
+                      </div>
+                    </div>
                   </div>
-                  <div className="flex items-center justify-between">
-                    <span className="grid size-10 place-items-center rounded-xl bg-brand-400/10 text-brand-300">
-                      <Trophy className="size-5" />
-                    </span>
-                    <Badge tone="green">Đã công bố</Badge>
+
+                  <div className="flex min-h-24 items-center px-5 py-4">
+                    <MatchResultSummary draw={draw} />
                   </div>
-                  <h2 className="mt-5 text-lg font-black text-white">{draw.title}</h2>
-                  <p className="mt-1 flex items-center gap-1.5 text-xs text-slate-500">
-                    <CalendarDays className="size-3.5" /> {formatMatchDate(draw.matchDate)}
-                  </p>
-                </div>
-                <div className="grid grid-cols-3 divide-x divide-white/7 px-2 py-4">
-                  <div className="text-center">
-                    <p className="text-lg font-black text-white">{draw.teamCount}</p>
-                    <p className="text-[10px] font-bold text-slate-600">Đội</p>
-                  </div>
-                  <div className="text-center">
-                    <p className="text-lg font-black text-white">{draw.assignments.length}</p>
-                    <p className="text-[10px] font-bold text-slate-600">Cầu thủ</p>
-                  </div>
-                  <div className="text-center">
-                    <p className="text-lg font-black text-brand-300">
-                      {draw.qualityMetrics.qualityScore}%
+
+                  <div className="grid grid-cols-3 gap-2 px-4 py-4 text-center lg:grid-cols-1 lg:text-left">
+                    <p className="text-xs text-slate-500">
+                      <span className="block font-black text-white lg:inline">
+                        {draw.teamCount}
+                      </span>{' '}
+                      đội
                     </p>
-                    <p className="text-[10px] font-bold text-slate-600">Cân bằng</p>
+                    <p className="text-xs text-slate-500">
+                      <span className="block font-black text-white lg:inline">
+                        {draw.assignments.length}
+                      </span>{' '}
+                      cầu thủ
+                    </p>
+                    <p className="text-xs text-slate-500">
+                      <span className="block font-black text-brand-300 lg:inline">
+                        {draw.qualityMetrics.qualityScore}%
+                      </span>{' '}
+                      cân bằng
+                    </p>
                   </div>
-                </div>
-                <div className="flex min-h-12 items-center justify-between border-t border-white/7 px-5 text-xs font-extrabold text-slate-400 transition group-hover:text-white">
-                  Xem chi tiết
-                  <ChevronRight className="size-4 transition-transform group-hover:translate-x-0.5" />
-                </div>
-              </Link>
-              <div className="border-t border-white/7 p-3">
-                <Button
-                  variant="danger"
-                  className="w-full disabled:opacity-40"
-                  disabled={!isAdmin || isDemo || deletingId === draw.id}
-                  onClick={() => void handleDelete(draw.id, draw.title)}
-                  title={isAdmin ? 'Xóa kết quả đã công bố' : 'Chỉ admin mới có quyền xóa kết quả'}
-                  aria-label={`Xóa kết quả ${draw.title}`}
-                >
-                  <Trash2 className="size-4" />
-                  {deletingId === draw.id ? 'Đang xóa…' : 'Xóa kết quả'}
-                </Button>
+
+                  <div className="grid grid-cols-3 gap-2 p-4">
+                    <Link
+                      to={`/results/${draw.id}`}
+                      className="inline-flex min-h-11 items-center justify-center gap-1 rounded-xl border border-white/10 bg-white/6 px-3 text-xs font-extrabold text-white transition hover:bg-white/10 focus-ring"
+                    >
+                      Chi tiết <ChevronRight className="size-3.5" />
+                    </Link>
+                    <Button
+                      variant="secondary"
+                      className="px-3 text-xs disabled:opacity-40"
+                      disabled={!isAdmin || isDemo}
+                      onClick={() => openResultDialog(draw)}
+                      title={
+                        isAdmin ? 'Nhập kết quả sau trận' : 'Chỉ admin mới có quyền nhập kết quả'
+                      }
+                      aria-label={`Nhập kết quả ${draw.title}`}
+                    >
+                      <PencilLine className="size-3.5" />
+                      {draw.teamCount === 2 ? 'Tỉ số' : 'BXH'}
+                    </Button>
+                    <Button
+                      variant="danger"
+                      className="px-3 text-xs disabled:opacity-40"
+                      disabled={!isAdmin || isDemo || deletingId === draw.id}
+                      onClick={() => void handleDelete(draw.id, draw.title)}
+                      title={
+                        isAdmin ? 'Xóa kết quả đã công bố' : 'Chỉ admin mới có quyền xóa kết quả'
+                      }
+                      aria-label={`Xóa kết quả ${draw.title}`}
+                    >
+                      <Trash2 className="size-3.5" />
+                      {deletingId === draw.id ? 'Đang xóa…' : 'Xóa'}
+                    </Button>
+                  </div>
+                </article>
               </div>
             </Card>
           ))}
@@ -147,17 +215,33 @@ export function ResultsPage() {
             <Clock3 className="size-5" />
           </span>
           <div>
-            <p className="text-sm font-extrabold text-white">Lịch sử đồng bộ nhiều thiết bị</p>
+            <p className="text-sm font-extrabold text-white">Lịch sử theo ngày thi đấu</p>
             <p className="mt-1 text-xs leading-5 text-slate-500">
-              Chỉ phiên published mới xuất hiện; dữ liệu snapshot không đổi khi hồ sơ cầu thủ được
-              sửa.
+              Mặc định thấy tối đa khoảng 5 trận; cuộn dọc để xem thêm và cuộn ngang từng dòng trên
+              màn hình hẹp.
             </p>
           </div>
         </div>
         <Badge>
-          <Users className="size-3" /> {isAdmin ? 'Admin có quyền xóa' : 'Viewer chỉ đọc'}
+          <Users className="size-3" /> {isAdmin ? 'Admin được cập nhật và xóa' : 'Viewer chỉ đọc'}
         </Badge>
       </Card>
+
+      {editingDraw && (
+        <MatchResultDialog
+          key={editingDraw.id}
+          draw={editingDraw}
+          open
+          isSaving={isSavingResult}
+          error={resultError}
+          onClose={() => {
+            if (isSavingResult) return
+            setEditingDraw(null)
+            setResultError(null)
+          }}
+          onSubmit={handleSaveResult}
+        />
+      )}
     </div>
   )
 }

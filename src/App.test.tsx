@@ -42,8 +42,12 @@ describe('App', () => {
 
   it('hiển thị lịch sử và chi tiết kết quả mẫu cho viewer', () => {
     const { unmount } = renderApp(['/results'])
-    expect(screen.getByRole('heading', { name: 'Kết quả đã công bố' })).toBeVisible()
+    expect(screen.getByRole('heading', { name: 'Lịch sử thi đấu' })).toBeVisible()
     expect(screen.getByText('Kèo tối thứ Năm')).toBeVisible()
+    expect(screen.getByLabelText('Tỉ số 3 - 1')).toBeVisible()
+    expect(screen.getByLabelText('Thắng')).toHaveTextContent('W')
+    expect(screen.getByLabelText('Thua')).toHaveTextContent('L')
+    expect(screen.getByRole('button', { name: 'Nhập kết quả Kèo tối thứ Năm' })).toBeDisabled()
     expect(screen.getByRole('button', { name: 'Xóa kết quả Kèo tối thứ Năm' })).toBeDisabled()
     unmount()
 

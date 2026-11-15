@@ -19,6 +19,8 @@ const session: SessionRow = {
   draw_seed: 'demo-phase-6',
   created_at: '2026-11-12T12:00:00.000Z',
   published_at: '2026-11-12T12:05:00.000Z',
+  team_scores: [3, 1],
+  team_rankings: null,
 }
 
 const balanced = balanceTeams(

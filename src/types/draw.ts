@@ -35,4 +35,6 @@ export interface PublishedDraw {
   assignments: PublishedAssignment[]
   teams: PublishedTeam[]
   qualityMetrics: QualityMetrics
+  teamScores: [number, number] | null
+  teamRankings: [number, number, number] | null
 }

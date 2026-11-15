@@ -22,6 +22,25 @@ export interface PublishDrawInput {
   players: readonly Player[]
 }
 
+export interface PostMatchResultInput {
+  teamScores: [number, number] | null
+  teamRankings: [number, number, number] | null
+}
+
+function normalizeTeamScores(session: SessionRow): [number, number] | null {
+  const scores = session.team_scores
+  if (session.team_count !== 2 || !scores || scores.length !== 2) return null
+  if (!scores.every((score) => Number.isInteger(score) && score >= 0 && score <= 99)) return null
+  return [scores[0], scores[1]]
+}
+
+function normalizeTeamRankings(session: SessionRow): [number, number, number] | null {
+  const rankings = session.team_rankings
+  if (session.team_count !== 3 || !rankings || rankings.length !== 3) return null
+  if ([...rankings].sort().join(',') !== '0,1,2') return null
+  return [rankings[0], rankings[1], rankings[2]]
+}
+
 function normalizeSnapshotPosition(value: string): Position | null {
   if (POSITIONS.includes(value as Position)) return value as Position
   if (value === 'CAM' || value === 'LM' || value === 'RM') return 'CM'
@@ -115,6 +134,8 @@ export function buildPublishedDraw(
     assignments,
     teams,
     qualityMetrics,
+    teamScores: normalizeTeamScores(session),
+    teamRankings: normalizeTeamRankings(session),
   }
 }
 
@@ -164,6 +185,17 @@ export async function deletePublishedDraw(id: string) {
   const { data, error } = await client.rpc('delete_published_draw', { p_session_id: id })
   if (error) throw error
   if (data !== true) throw new Error('Không thể xác nhận kết quả đã được xóa.')
+}
+
+export async function setPublishedDrawResult(id: string, result: PostMatchResultInput) {
+  const client = requireSupabase()
+  const { data, error } = await client.rpc('set_published_draw_result', {
+    p_session_id: id,
+    p_team_scores: result.teamScores,
+    p_team_rankings: result.teamRankings,
+  })
+  if (error) throw error
+  if (data !== true) throw new Error('Không thể xác nhận kết quả sau trận đã được lưu.')
 }
 
 export async function publishDraw(input: PublishDrawInput) {

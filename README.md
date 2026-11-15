@@ -107,6 +107,7 @@ Workflow [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml) chạy f
 
 - Schema, RLS, functions và triggers được lưu trong `supabase/migrations/`; đây là nguồn sự thật để dựng lại cấu trúc.
 - Định kỳ xuất CSV các bảng `players`, `draw_sessions` và `draw_assignments` từ Supabase Dashboard, lưu ở nơi riêng tư có ngày backup.
+- Lịch sử thi đấu lưu tỉ số hai đội hoặc thứ hạng ba đội ngay trên `draw_sessions`; chỉ admin được cập nhật kết quả sau trận.
 - Trước migration lớn, tạo database backup bằng công cụ Supabase/PostgreSQL phù hợp với gói đang dùng.
 - Ưu tiên migration sửa tiến lên. Chỉ dùng file trong `supabase/rollback/` khi đã backup và chủ tài khoản xác nhận rõ ràng.
 - Không commit file backup chứa dữ liệu người dùng hoặc thông tin xác thực.
