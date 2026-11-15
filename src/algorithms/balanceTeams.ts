@@ -2,7 +2,7 @@ import { createSeededRandom, type SeededRandom } from './seededRandom'
 import { scoreBalance, type QualityMetrics } from './scoreBalance'
 import { POSITION_GROUPS, type Player, type PositionGroup } from '../types/player'
 
-export const ALGORITHM_VERSION = 'balanced-candidates-v4'
+export const ALGORITHM_VERSION = 'balanced-candidates-v5'
 
 export type TeamCount = 2 | 3
 

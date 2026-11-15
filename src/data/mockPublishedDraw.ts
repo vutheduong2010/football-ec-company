@@ -15,7 +15,7 @@ const session: SessionRow = {
   field_size: 7,
   status: 'published',
   created_by: 'demo-admin',
-  algorithm_version: 'balanced-candidates-v4',
+  algorithm_version: 'balanced-candidates-v5',
   draw_seed: 'demo-phase-6',
   created_at: '2026-11-12T12:00:00.000Z',
   published_at: '2026-11-12T12:05:00.000Z',

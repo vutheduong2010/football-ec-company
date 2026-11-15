@@ -26,10 +26,11 @@ function getPositionPreference(player: Player, position: Position): PositionPref
 }
 
 function isBetterLineup(
-  candidate: { primary: number; secondary: number; group: number },
-  current: { primary: number; secondary: number; group: number } | null,
+  candidate: { compatible: number; primary: number; secondary: number; group: number },
+  current: { compatible: number; primary: number; secondary: number; group: number } | null,
 ) {
   if (!current) return true
+  if (candidate.compatible !== current.compatible) return candidate.compatible > current.compatible
   if (candidate.primary !== current.primary) return candidate.primary > current.primary
   if (candidate.secondary !== current.secondary) return candidate.secondary > current.secondary
   return candidate.group > current.group
@@ -38,17 +39,25 @@ function isBetterLineup(
 export function arrangeLineup(players: readonly Player[]): ArrangedLineupPlayer[] {
   const lineupPlayers = players.slice(0, FORMATION.length)
   let best: ArrangedLineupPlayer[] = []
-  let bestScore: { primary: number; secondary: number; group: number } | null = null
+  let bestScore: {
+    compatible: number
+    primary: number
+    secondary: number
+    group: number
+  } | null = null
 
   const search = (playerIndex: number, usedSlots: Set<number>, current: ArrangedLineupPlayer[]) => {
     if (playerIndex >= lineupPlayers.length) {
       const score = current.reduce(
         (total, assignment) => ({
+          compatible:
+            total.compatible +
+            Number(assignment.preference === 'primary' || assignment.preference === 'secondary'),
           primary: total.primary + Number(assignment.preference === 'primary'),
           secondary: total.secondary + Number(assignment.preference === 'secondary'),
           group: total.group + Number(assignment.preference === 'group'),
         }),
-        { primary: 0, secondary: 0, group: 0 },
+        { compatible: 0, primary: 0, secondary: 0, group: 0 },
       )
 
       if (isBetterLineup(score, bestScore)) {

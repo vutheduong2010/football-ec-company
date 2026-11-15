@@ -2,7 +2,7 @@
   "name": "football-ec-company",
   "description": "A free, smart 7-a-side football team randomizer with balanced player distribution and an interactive spinning wheel.",
   "private": true,
-  "version": "1.4.0",
+  "version": "1.4.1",
   "type": "module",
   "engines": {
     "node": ">=24"
