@@ -10,11 +10,13 @@ export function PlayerCard({
   player,
   selected,
   onToggle,
+  disabled = false,
   actions,
 }: {
   player: Player
   selected?: boolean
   onToggle?: () => void
+  disabled?: boolean
   actions?: ReactNode
 }) {
   const card = (
@@ -58,7 +60,8 @@ export function PlayerCard({
     <button
       type="button"
       onClick={onToggle}
-      className="w-full rounded-2xl focus-ring"
+      disabled={disabled}
+      className="w-full rounded-2xl focus-ring disabled:cursor-not-allowed disabled:opacity-80"
       aria-pressed={selected}
     >
       {card}

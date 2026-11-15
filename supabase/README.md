@@ -69,6 +69,8 @@ Migration `202611150003_lineup_positions_and_admin_delete.sql` snapshot tối đ
 
 Migration `202611150004_post_match_results.sql` bổ sung tỉ số cho trận hai đội, thứ hạng cho bảng ba đội và RPC `set_published_draw_result` chỉ dành cho admin.
 
+Migration `202611150005_live_draw_room.sql` tạo trạng thái chia đội trực tiếp dạng singleton, cho viewer đọc/subscribe qua Supabase Realtime và chỉ cho admin cập nhật.
+
 RLS là lớp bảo mật thật. `isAdmin` trong React chỉ dùng để điều chỉnh UX.
 
 ## 6. Kiểm tra trước khi dùng production

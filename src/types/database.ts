@@ -115,6 +115,24 @@ export type Database = {
         Update: never
         Relationships: []
       }
+      live_draw_state: {
+        Row: {
+          id: number
+          state: Json
+          updated_by: string | null
+          updated_at: string
+        }
+        Insert: {
+          id?: number
+          state?: Json
+          updated_by?: string | null
+          updated_at?: string
+        }
+        Update: {
+          state?: Json
+        }
+        Relationships: []
+      }
     }
     Views: Record<string, never>
     Functions: {

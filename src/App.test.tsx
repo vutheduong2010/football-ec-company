@@ -59,10 +59,13 @@ describe('App', () => {
     expect(screen.getByText(/Kéo cầu thủ trên sân hoặc ảnh đại diện trong danh sách/)).toBeVisible()
   })
 
-  it('không cho viewer mở giao diện điểm danh', () => {
+  it('cho viewer mở tab chia đội ở chế độ chỉ xem', () => {
     renderApp(['/draw'])
 
-    expect(screen.getByRole('heading', { name: 'Cần quyền quản trị để chia đội' })).toBeVisible()
-    expect(screen.getByText(/chưa được cấu hình nên chưa thể xác thực admin/i)).toBeVisible()
+    expect(screen.getByRole('heading', { name: 'Chia đội' })).toBeVisible()
+    expect(screen.getByText('Chế độ minh họa')).toBeVisible()
+    expect(screen.getByRole('button', { name: 'Bỏ chọn' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Chọn tất cả' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Xem trước chia đội' })).toBeDisabled()
   })
 })

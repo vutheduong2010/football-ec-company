@@ -21,6 +21,7 @@ Frontend là ứng dụng React tĩnh trên GitHub Pages. Supabase cung cấp Po
 - Sơ đồ và kết quả ưu tiên biệt danh; nếu trống mới hiển thị tên cầu thủ.
 - Chia sẻ liên kết và xuất PNG sắc nét.
 - Một admin trong allow-list; viewer không cần đăng nhập và chỉ có quyền đọc.
+- Viewer có thể mở tab Chia đội ở chế độ chỉ xem và theo dõi trực tiếp thao tác điểm danh, tạo phương án, vòng quay của admin qua Supabase Realtime.
 
 ## Chạy local
 

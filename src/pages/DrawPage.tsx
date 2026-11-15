@@ -6,26 +6,27 @@ import {
   Dices,
   Goal,
   Info,
-  LockKeyhole,
+  Radio,
   RotateCcw,
   ShieldCheck,
   Sparkles,
   Users,
 } from 'lucide-react'
-import { useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 
 import { balanceTeams, type BalanceResult } from '../algorithms/balanceTeams'
 import { PlayerCard } from '../components/football/PlayerCard'
 import { Badge } from '../components/ui/Badge'
 import { Button } from '../components/ui/Button'
-import { buttonClass } from '../components/ui/buttonStyles'
 import { Card } from '../components/ui/Card'
 import { Notice } from '../components/ui/Notice'
 import { PageHeader } from '../components/ui/PageHeader'
 import { StatusState } from '../components/ui/StatusState'
 import { DrawExperience } from '../features/draw/DrawExperience'
+import { defaultMatchTitle } from '../features/draw/drawFormat'
+import type { LiveDrawExperienceState, LiveDrawState } from '../features/draw/liveDrawTypes'
 import { useAttendanceDraft } from '../features/draw/useAttendanceDraft'
+import { useLiveDrawRoom, type LiveConnectionStatus } from '../features/draw/useLiveDrawRoom'
 import { useAuth } from '../hooks/useAuth'
 import { usePlayers } from '../hooks/usePlayers'
 import type { Player } from '../types/player'
@@ -46,19 +47,33 @@ function createDrawSeed() {
   return crypto.randomUUID()
 }
 
-function AdminDrawWorkspace({ players }: { players: Player[] }) {
+function DrawWorkspace({
+  players,
+  isAdmin,
+  liveState,
+  liveStatus,
+  liveError,
+  publishLiveState,
+}: {
+  players: Player[]
+  isAdmin: boolean
+  liveState: LiveDrawState
+  liveStatus: LiveConnectionStatus
+  liveError: string | null
+  publishLiveState: (state: LiveDrawState) => Promise<void>
+}) {
   const [preview, setPreview] = useState<DrawPreview | null>(null)
   const [previewError, setPreviewError] = useState<PreviewError | null>(null)
+  const [initialDate] = useState(() => new Date().toLocaleDateString('en-CA'))
+  const [experienceState, setExperienceState] = useState<LiveDrawExperienceState>(() => ({
+    wheel: { status: 'idle', revealedCount: 0 },
+    matchDate: initialDate,
+    matchTitle: defaultMatchTitle(initialDate),
+  }))
   const activePlayers = useMemo(() => players.filter((player) => player.isActive), [players])
-  const {
-    selectedPlayerIds,
-    teamCount,
-    setTeamCount,
-    togglePlayer,
-    selectAll,
-    clearSelection,
-    clearDraft,
-  } = useAttendanceDraft(activePlayers)
+  const attendance = useAttendanceDraft(activePlayers)
+  const selectedPlayerIds = isAdmin ? attendance.selectedPlayerIds : liveState.selectedPlayerIds
+  const teamCount = isAdmin ? attendance.teamCount : liveState.teamCount
 
   const selectedPlayers = useMemo(
     () => activePlayers.filter((player) => selectedPlayerIds.includes(player.id)),
@@ -68,16 +83,26 @@ function AdminDrawWorkspace({ players }: { players: Player[] }) {
   const remainder = selectedPlayerIds.length % teamCount
   const gkCount = selectedPlayers.filter((player) => player.positionGroup === 'GK').length
   const previewSignature = `${teamCount}:${[...selectedPlayerIds].sort().join(',')}`
-  const activePreview = preview?.signature === previewSignature ? preview.result : null
-  const activeError = previewError?.signature === previewSignature ? previewError.message : null
+  const activePreview = isAdmin
+    ? preview?.signature === previewSignature
+      ? preview.result
+      : null
+    : liveState.preview
+  const activeError =
+    isAdmin && previewError?.signature === previewSignature ? previewError.message : null
   const playerById = useMemo(
     () => new Map(activePlayers.map((player) => [player.id, player])),
     [activePlayers],
   )
 
   const runPreview = () => {
+    if (!isAdmin) return
     try {
       const result = balanceTeams(activePlayers, selectedPlayerIds, teamCount, createDrawSeed())
+      setExperienceState((current) => ({
+        ...current,
+        wheel: { status: 'idle', revealedCount: 0 },
+      }))
       setPreview({ signature: previewSignature, result })
       setPreviewError(null)
     } catch (error) {
@@ -87,6 +112,30 @@ function AdminDrawWorkspace({ players }: { players: Player[] }) {
       })
     }
   }
+
+  const handleExperienceStateChange = useCallback((nextState: LiveDrawExperienceState) => {
+    setExperienceState((current) =>
+      current.wheel.status === nextState.wheel.status &&
+      current.wheel.revealedCount === nextState.wheel.revealedCount &&
+      current.matchTitle === nextState.matchTitle &&
+      current.matchDate === nextState.matchDate
+        ? current
+        : nextState,
+    )
+  }, [])
+
+  useEffect(() => {
+    if (!isAdmin) return
+    void publishLiveState({
+      version: 1,
+      selectedPlayerIds,
+      teamCount,
+      preview: activePreview,
+      wheel: activePreview ? experienceState.wheel : { status: 'idle', revealedCount: 0 },
+      matchTitle: experienceState.matchTitle,
+      matchDate: experienceState.matchDate,
+    })
+  }, [activePreview, experienceState, isAdmin, publishLiveState, selectedPlayerIds, teamCount])
 
   return (
     <>
@@ -110,10 +159,19 @@ function AdminDrawWorkspace({ players }: { players: Player[] }) {
       </ol>
 
       <div className="mb-5">
-        <Notice tone="info">
-          Điểm danh và cấu hình đang được lưu cục bộ trên thiết bị này. Dữ liệu server chỉ được tạo
-          sau khi hoàn tất thuật toán và admin xác nhận publish.
+        <Notice tone={liveStatus === 'error' ? 'warning' : 'info'}>
+          <span className="inline-flex items-start gap-2">
+            <Radio
+              className={`mt-0.5 size-4 shrink-0 ${liveStatus === 'live' ? 'text-brand-300' : ''}`}
+            />
+            {isAdmin
+              ? 'Mọi thao tác điểm danh, tạo phương án và quay đang được đồng bộ trực tiếp cho viewer.'
+              : liveStatus === 'live'
+                ? 'Bạn đang xem trực tiếp thao tác của admin. Tất cả chức năng chỉnh sửa đã bị khóa.'
+                : 'Đang kết nối phòng chia đội trực tiếp. Dữ liệu trên màn hình chỉ có thể xem.'}
+          </span>
         </Notice>
+        {liveError && <p className="mt-2 text-xs text-orange-300">{liveError}</p>}
       </div>
 
       <div className="grid gap-5 xl:grid-cols-[1.25fr_0.75fr]">
@@ -126,16 +184,27 @@ function AdminDrawWorkspace({ players }: { players: Player[] }) {
               </p>
             </div>
             <div className="flex flex-wrap gap-2">
-              <Button variant="ghost" className="px-3 text-xs" onClick={clearSelection}>
+              <Button
+                variant="ghost"
+                className="px-3 text-xs"
+                onClick={attendance.clearSelection}
+                disabled={!isAdmin}
+              >
                 Bỏ chọn
               </Button>
-              <Button variant="secondary" className="px-3 text-xs" onClick={selectAll}>
+              <Button
+                variant="secondary"
+                className="px-3 text-xs"
+                onClick={attendance.selectAll}
+                disabled={!isAdmin}
+              >
                 Chọn tất cả
               </Button>
               <Button
                 variant="ghost"
                 className="px-3 text-xs"
-                onClick={clearDraft}
+                onClick={attendance.clearDraft}
+                disabled={!isAdmin}
                 aria-label="Đặt lại bản nháp điểm danh"
               >
                 <RotateCcw className="size-3.5" /> Đặt lại
@@ -148,7 +217,8 @@ function AdminDrawWorkspace({ players }: { players: Player[] }) {
                 key={player.id}
                 player={player}
                 selected={selectedPlayerIds.includes(player.id)}
-                onToggle={() => togglePlayer(player.id)}
+                onToggle={() => attendance.togglePlayer(player.id)}
+                disabled={!isAdmin}
               />
             ))}
           </div>
@@ -173,7 +243,8 @@ function AdminDrawWorkspace({ players }: { players: Player[] }) {
                   <button
                     key={count}
                     type="button"
-                    onClick={() => setTeamCount(count as 2 | 3)}
+                    onClick={() => attendance.setTeamCount(count as 2 | 3)}
+                    disabled={!isAdmin}
                     className={`min-h-11 rounded-lg text-sm font-extrabold transition focus-ring ${teamCount === count ? 'bg-white/10 text-white shadow-sm' : 'text-slate-500 hover:text-slate-300'}`}
                     aria-pressed={teamCount === count}
                   >
@@ -239,7 +310,7 @@ function AdminDrawWorkspace({ players }: { players: Player[] }) {
 
             <Button
               className="mt-5 w-full"
-              disabled={selectedPlayerIds.length < teamCount}
+              disabled={!isAdmin || selectedPlayerIds.length < teamCount}
               onClick={runPreview}
             >
               <Dices className="size-4" />
@@ -329,6 +400,17 @@ function AdminDrawWorkspace({ players }: { players: Player[] }) {
                 key={activePreview.drawSeed}
                 result={activePreview}
                 players={[...playerById.values()]}
+                readOnly={!isAdmin}
+                liveState={
+                  isAdmin
+                    ? experienceState
+                    : {
+                        wheel: liveState.wheel,
+                        matchTitle: liveState.matchTitle,
+                        matchDate: liveState.matchDate,
+                      }
+                }
+                onStateChange={isAdmin ? handleExperienceStateChange : undefined}
               />
             </div>
           </Card>
@@ -341,45 +423,33 @@ function AdminDrawWorkspace({ players }: { players: Player[] }) {
 export function DrawPage() {
   const { isAdmin, isLoading: authLoading, isConfigured } = useAuth()
   const { players, isLoading, error, refresh } = usePlayers()
+  const liveRoom = useLiveDrawRoom()
+
+  const liveBadge = {
+    live: {
+      tone: 'green' as const,
+      label: isAdmin ? 'Admin · Đang phát trực tiếp' : 'Viewer · Trực tiếp',
+    },
+    connecting: { tone: 'blue' as const, label: 'Đang kết nối trực tiếp' },
+    error: { tone: 'orange' as const, label: 'Mất kết nối trực tiếp' },
+    offline: { tone: 'slate' as const, label: isConfigured ? 'Ngoại tuyến' : 'Chế độ minh họa' },
+  }[liveRoom.status]
 
   return (
     <div>
       <PageHeader
-        eyebrow={isAdmin ? 'Bản nháp cục bộ' : 'Quyền quản trị'}
+        eyebrow={isAdmin ? 'Phòng điều khiển' : 'Chế độ chỉ xem'}
         title="Chia đội"
-        description="Điểm danh, khóa phương án cân bằng rồi tự động reveal toàn bộ cầu thủ bằng vòng quay tương tác."
+        description="Admin điều khiển điểm danh và vòng quay; viewer theo dõi cùng trạng thái theo thời gian thực."
         action={
-          isAdmin ? (
-            <Badge tone="green">Admin đã xác thực</Badge>
-          ) : (
-            <Badge tone="orange">Chỉ admin được thực hiện</Badge>
-          )
+          <Badge tone={liveBadge.tone}>
+            <Radio className="size-3" /> {liveBadge.label}
+          </Badge>
         }
       />
 
       {authLoading ? (
         <StatusState type="loading" />
-      ) : !isAdmin ? (
-        <Card className="mx-auto max-w-2xl px-5 py-10 text-center sm:px-10">
-          <span className="mx-auto grid size-14 place-items-center rounded-2xl bg-orange-400/10 text-orange-300 ring-1 ring-orange-400/20">
-            <LockKeyhole className="size-6" />
-          </span>
-          <h2 className="mt-5 text-xl font-black text-white">Cần quyền quản trị để chia đội</h2>
-          <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-500">
-            Viewer vẫn xem được cầu thủ và kết quả đã công bố. Điểm danh, quay và lưu kết quả chỉ
-            dành cho admin duy nhất.
-          </p>
-          {!isConfigured && (
-            <div className="mt-5">
-              <Notice tone="warning">
-                Supabase chưa được cấu hình nên chưa thể xác thực admin.
-              </Notice>
-            </div>
-          )}
-          <Link to="/admin/login" className={buttonClass('primary', 'mt-6')}>
-            <LockKeyhole className="size-4" /> Đăng nhập admin
-          </Link>
-        </Card>
       ) : isLoading ? (
         <StatusState type="loading" />
       ) : error ? (
@@ -390,7 +460,14 @@ export function DrawPage() {
           </Button>
         </Card>
       ) : (
-        <AdminDrawWorkspace players={players} />
+        <DrawWorkspace
+          players={players}
+          isAdmin={isAdmin}
+          liveState={liveRoom.state}
+          liveStatus={liveRoom.status}
+          liveError={liveRoom.error}
+          publishLiveState={liveRoom.publish}
+        />
       )}
     </div>
   )

@@ -1,7 +1,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(33);
+select plan(41);
 
 insert into auth.users (
   id,
@@ -155,6 +155,11 @@ select is(
   true,
   'RLS is enabled for draw_assignments'
 );
+select is(
+  (select relrowsecurity from pg_class where oid = 'public.live_draw_state'::regclass),
+  true,
+  'RLS is enabled for live_draw_state'
+);
 
 set local role anon;
 select set_config('request.jwt.claims', '{"role":"anon"}', true);
@@ -176,6 +181,13 @@ select is(
   1::bigint,
   'anon only sees published assignments'
 );
+select is((select count(*) from public.live_draw_state), 1::bigint, 'anon can read live draw state');
+select throws_ok(
+  $$update public.live_draw_state set state = '{"version":1}'::jsonb where id = 1$$,
+  '42501',
+  null,
+  'anon cannot update live draw state'
+);
 
 reset role;
 set local role authenticated;
@@ -195,6 +207,17 @@ select throws_ok(
   '42501',
   null,
   'authenticated non-admin cannot insert players'
+);
+select is(
+  (select count(*) from public.live_draw_state),
+  1::bigint,
+  'authenticated viewer can read live draw state'
+);
+select throws_ok(
+  $$update public.live_draw_state set state = '{"version":1}'::jsonb where id = 1$$,
+  '42501',
+  null,
+  'authenticated viewer cannot update live draw state'
 );
 select throws_ok(
   $$select public.publish_draw(
@@ -242,6 +265,30 @@ select is((select count(*) from public.draw_sessions), 2::bigint, 'admin can rea
 select lives_ok(
   $$insert into public.players (name, seed, primary_position) values ('Admin insert', 1, 'CM')$$,
   'admin can insert players'
+);
+select lives_ok(
+  $$update public.live_draw_state
+    set state = '{
+      "version":1,
+      "selectedPlayerIds":[],
+      "teamCount":3,
+      "preview":null,
+      "wheel":{"status":"idle","revealedCount":0},
+      "matchTitle":"Test live",
+      "matchDate":"2026-11-15"
+    }'::jsonb
+    where id = 1$$,
+  'admin can update live draw state'
+);
+select is(
+  (select state ->> 'teamCount' from public.live_draw_state where id = 1),
+  '3',
+  'live draw state persists the admin team count'
+);
+select is(
+  (select updated_by from public.live_draw_state where id = 1),
+  '00000000-0000-4000-8000-000000000001'::uuid,
+  'live draw state records the admin who updated it'
 );
 select throws_ok(
   $$insert into public.draw_sessions (

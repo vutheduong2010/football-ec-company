@@ -8,7 +8,7 @@ import {
   Send,
   Volume2,
 } from 'lucide-react'
-import { useMemo, useState, type FormEvent } from 'react'
+import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 import type { BalanceResult } from '../../algorithms/balanceTeams'
@@ -20,19 +20,59 @@ import { Notice } from '../../components/ui/Notice'
 import type { Player } from '../../types/player'
 import { defaultMatchTitle } from './drawFormat'
 import { publishDraw } from './drawService'
+import type { DrawWheelState } from './drawWheelMachine'
+import type { LiveDrawExperienceState } from './liveDrawTypes'
 import { getPlayerDisplayName } from '../players/playerDisplay'
 import { useDrawWheel } from './useDrawWheel'
 
 const TEAM_LABELS = ['A', 'B', 'C'] as const
 
-export function DrawExperience({ result, players }: { result: BalanceResult; players: Player[] }) {
+export function DrawExperience({
+  result,
+  players,
+  readOnly = false,
+  liveState,
+  onStateChange,
+}: {
+  result: BalanceResult
+  players: Player[]
+  readOnly?: boolean
+  liveState?: LiveDrawExperienceState
+  onStateChange?: (state: LiveDrawExperienceState) => void
+}) {
   const navigate = useNavigate()
-  const wheel = useDrawWheel(result.revealSequence)
+  const localWheel = useDrawWheel(result.revealSequence)
   const [initialDate] = useState(() => new Date().toLocaleDateString('en-CA'))
-  const [matchDate, setMatchDate] = useState(initialDate)
-  const [title, setTitle] = useState(() => defaultMatchTitle(initialDate))
+  const [localMatchDate, setLocalMatchDate] = useState(initialDate)
+  const [localTitle, setLocalTitle] = useState(() => defaultMatchTitle(initialDate))
   const [isPublishing, setIsPublishing] = useState(false)
   const [publishError, setPublishError] = useState<string | null>(null)
+  const wheelState: DrawWheelState = useMemo(
+    () =>
+      readOnly
+        ? (liveState?.wheel ?? { status: 'idle', revealedCount: 0 })
+        : { status: localWheel.status, revealedCount: localWheel.revealedCount },
+    [liveState?.wheel, localWheel.revealedCount, localWheel.status, readOnly],
+  )
+  const matchDate = readOnly ? liveState?.matchDate || initialDate : localMatchDate
+  const title = readOnly ? liveState?.matchTitle || defaultMatchTitle(matchDate) : localTitle
+  const revealedIds = result.revealSequence.slice(0, wheelState.revealedCount)
+  const wheel = {
+    ...localWheel,
+    ...wheelState,
+    revealedIds,
+    currentPlayerId:
+      wheelState.revealedCount < result.revealSequence.length
+        ? result.revealSequence[wheelState.revealedCount]
+        : null,
+    latestPlayerId:
+      wheelState.revealedCount > 0 ? result.revealSequence[wheelState.revealedCount - 1] : null,
+    remainingCount: Math.max(0, result.revealSequence.length - wheelState.revealedCount),
+    progress:
+      result.revealSequence.length === 0
+        ? 0
+        : Math.min(1, wheelState.revealedCount / result.revealSequence.length),
+  }
   const playerById = useMemo(() => new Map(players.map((player) => [player.id, player])), [players])
   const assignmentByPlayerId = useMemo(
     () => new Map(result.assignments.map((assignment) => [assignment.playerId, assignment])),
@@ -62,9 +102,18 @@ export function DrawExperience({ result, players }: { result: BalanceResult; pla
     completed: 'Đã hoàn tất',
   }[wheel.status]
 
+  useEffect(() => {
+    if (readOnly) return
+    onStateChange?.({
+      wheel: wheelState,
+      matchTitle: localTitle,
+      matchDate: localMatchDate,
+    })
+  }, [localMatchDate, localTitle, onStateChange, readOnly, wheelState])
+
   const handlePublish = async (event: FormEvent) => {
     event.preventDefault()
-    if (wheel.status !== 'completed' || isPublishing) return
+    if (readOnly || wheel.status !== 'completed' || isPublishing) return
     setIsPublishing(true)
     setPublishError(null)
     try {
@@ -160,22 +209,27 @@ export function DrawExperience({ result, players }: { result: BalanceResult; pla
 
           <div className="mt-5 grid gap-2 sm:grid-cols-2">
             {wheel.status === 'idle' && (
-              <Button className="w-full sm:col-span-2" onClick={wheel.start}>
+              <Button className="w-full sm:col-span-2" onClick={wheel.start} disabled={readOnly}>
                 <Play className="size-4 fill-current" /> Bắt đầu quay tự động
               </Button>
             )}
             {wheel.status === 'spinning' && (
-              <Button variant="secondary" className="w-full" onClick={wheel.pause}>
+              <Button
+                variant="secondary"
+                className="w-full"
+                onClick={wheel.pause}
+                disabled={readOnly}
+              >
                 <Pause className="size-4 fill-current" /> Tạm dừng
               </Button>
             )}
             {wheel.status === 'paused' && (
-              <Button className="w-full" onClick={wheel.resume}>
+              <Button className="w-full" onClick={wheel.resume} disabled={readOnly}>
                 <Play className="size-4 fill-current" /> Tiếp tục
               </Button>
             )}
             {wheel.status !== 'completed' && wheel.status !== 'idle' && (
-              <Button variant="ghost" className="w-full" onClick={wheel.skip}>
+              <Button variant="ghost" className="w-full" onClick={wheel.skip} disabled={readOnly}>
                 <FastForward className="size-4" /> Bỏ qua hoạt ảnh
               </Button>
             )}
@@ -186,7 +240,12 @@ export function DrawExperience({ result, players }: { result: BalanceResult; pla
               </div>
             )}
             {wheel.status !== 'idle' && (
-              <Button variant="ghost" className="w-full sm:col-span-2" onClick={wheel.reset}>
+              <Button
+                variant="ghost"
+                className="w-full sm:col-span-2"
+                onClick={wheel.reset}
+                disabled={readOnly}
+              >
                 <RotateCcw className="size-4" /> Đặt lại vòng quay
               </Button>
             )}
@@ -208,8 +267,9 @@ export function DrawExperience({ result, players }: { result: BalanceResult; pla
 
       {wheel.status === 'completed' ? (
         <Notice tone="success">
-          Vòng quay đã hoàn tất. Kiểm tra tên buổi đá và ngày thi đấu trước khi công bố kết quả bất
-          biến.
+          {readOnly
+            ? 'Vòng quay đã hoàn tất. Chờ admin xác nhận và công bố kết quả.'
+            : 'Vòng quay đã hoàn tất. Kiểm tra tên buổi đá và ngày thi đấu trước khi công bố kết quả bất biến.'}
         </Notice>
       ) : (
         <Notice tone="info">
@@ -264,7 +324,8 @@ export function DrawExperience({ result, players }: { result: BalanceResult; pla
               Tên buổi đá
               <input
                 value={title}
-                onChange={(event) => setTitle(event.target.value)}
+                onChange={(event) => setLocalTitle(event.target.value)}
+                disabled={readOnly}
                 maxLength={120}
                 required
                 className="focus-ring mt-2 min-h-11 w-full rounded-xl border border-white/10 bg-ink-950/65 px-3 text-sm text-white placeholder:text-slate-700"
@@ -276,7 +337,8 @@ export function DrawExperience({ result, players }: { result: BalanceResult; pla
               <input
                 type="date"
                 value={matchDate}
-                onChange={(event) => setMatchDate(event.target.value)}
+                onChange={(event) => setLocalMatchDate(event.target.value)}
+                disabled={readOnly}
                 required
                 className="focus-ring mt-2 min-h-11 w-full rounded-xl border border-white/10 bg-ink-950/65 px-3 text-sm text-white"
               />
@@ -289,7 +351,11 @@ export function DrawExperience({ result, players }: { result: BalanceResult; pla
             </div>
           )}
 
-          <Button type="submit" className="mt-4 w-full" disabled={isPublishing || !title.trim()}>
+          <Button
+            type="submit"
+            className="mt-4 w-full"
+            disabled={readOnly || isPublishing || !title.trim()}
+          >
             <Send className="size-4" />
             {isPublishing ? 'Đang công bố…' : 'Xác nhận và công bố'}
           </Button>
