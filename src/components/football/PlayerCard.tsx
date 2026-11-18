@@ -24,6 +24,7 @@ export function PlayerCard({
       className={`flex min-h-20 items-center gap-3 p-3.5 transition ${!player.isActive ? 'opacity-60' : ''} ${selected ? 'border-brand-400/30 bg-brand-400/8' : 'hover:border-white/14'}`}
     >
       <PlayerAvatar
+        src={player.avatarUrl}
         alt={`Ảnh đại diện ${player.nickname?.trim() || player.name}`}
         className="size-11 rounded-xl ring-1 ring-white/10"
       />

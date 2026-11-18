@@ -1,15 +1,19 @@
-import { Power, Save, Trash2, X } from 'lucide-react'
+import { ImagePlus, Power, Save, Trash2, X } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react'
 
 import { Button } from '../../components/ui/Button'
+import { buttonClass } from '../../components/ui/buttonStyles'
+import { PlayerAvatar } from '../../components/football/PlayerAvatar'
 import {
   MAX_SECONDARY_POSITIONS,
   POSITIONS,
   type Player,
+  type PlayerAvatarUpdate,
   type PlayerInput,
   type Position,
   type Seed,
 } from '../../types/player'
+import { validateAvatarFile } from './playerAvatar'
 import { validatePlayerInput, type PlayerValidationErrors } from './playerValidation'
 
 const emptyPlayer: PlayerInput = {
@@ -48,14 +52,19 @@ export function PlayerFormDialog({
   player: Player | null
   isSaving: boolean
   onClose: () => void
-  onSubmit: (input: PlayerInput) => Promise<void>
+  onSubmit: (input: PlayerInput, avatar: PlayerAvatarUpdate) => Promise<void>
   onDelete?: () => Promise<void>
 }) {
   const [input, setInput] = useState<PlayerInput>(() => toInput(player))
   const [errors, setErrors] = useState<PlayerValidationErrors>({})
   const [submitError, setSubmitError] = useState<string | null>(null)
+  const [avatarFile, setAvatarFile] = useState<File | null>(null)
+  const [avatarPreviewUrl, setAvatarPreviewUrl] = useState<string | null>(null)
+  const [avatarRemoved, setAvatarRemoved] = useState(false)
+  const [avatarError, setAvatarError] = useState<string | null>(null)
   const initialInput = useMemo(() => toInput(player), [player])
-  const dirty = JSON.stringify(input) !== JSON.stringify(initialInput)
+  const dirty =
+    JSON.stringify(input) !== JSON.stringify(initialInput) || Boolean(avatarFile) || avatarRemoved
 
   const requestClose = useCallback(() => {
     if (dirty && !window.confirm('Bạn có thay đổi chưa lưu. Đóng biểu mẫu?')) return
@@ -70,6 +79,13 @@ export function PlayerFormDialog({
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [isSaving, open, requestClose])
+
+  useEffect(
+    () => () => {
+      if (avatarPreviewUrl) URL.revokeObjectURL(avatarPreviewUrl)
+    },
+    [avatarPreviewUrl],
+  )
 
   if (!open) return null
 
@@ -86,15 +102,33 @@ export function PlayerFormDialog({
     })
   }
 
+  const handleAvatarChange = (file: File | undefined) => {
+    if (!file) return
+    const validationError = validateAvatarFile(file)
+    setAvatarError(validationError)
+    if (validationError) return
+
+    setAvatarFile(file)
+    setAvatarRemoved(false)
+    setAvatarPreviewUrl(URL.createObjectURL(file))
+  }
+
+  const handleRemoveAvatar = () => {
+    setAvatarFile(null)
+    setAvatarPreviewUrl(null)
+    setAvatarRemoved(true)
+    setAvatarError(null)
+  }
+
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     const validationErrors = validatePlayerInput(input)
     setErrors(validationErrors)
     setSubmitError(null)
-    if (Object.keys(validationErrors).length > 0) return
+    if (Object.keys(validationErrors).length > 0 || avatarError) return
 
     try {
-      await onSubmit(input)
+      await onSubmit(input, { file: avatarFile, remove: avatarRemoved })
     } catch (error) {
       setSubmitError(error instanceof Error ? error.message : 'Không thể lưu cầu thủ.')
     }
@@ -154,6 +188,48 @@ export function PlayerFormDialog({
               {submitError}
             </p>
           )}
+
+          <section className="flex flex-col gap-4 rounded-2xl border border-white/8 bg-white/[0.025] p-4 sm:flex-row sm:items-center">
+            <PlayerAvatar
+              src={avatarPreviewUrl ?? (!avatarRemoved ? player?.avatarUrl : undefined)}
+              alt="Ảnh đại diện cầu thủ"
+              className="mx-auto size-24 rounded-2xl ring-2 ring-white/10 sm:mx-0"
+            />
+            <div className="min-w-0 flex-1 text-center sm:text-left">
+              <p className="text-sm font-black text-white">Ảnh đại diện</p>
+              <p className="mt-1 text-xs leading-5 text-slate-500">
+                JPG, PNG hoặc WebP · tối đa 5 MB. Ảnh được tự động tối ưu WebP 512 px trước khi tải
+                lên; nếu không chọn, hệ thống dùng ảnh mặc định.
+              </p>
+              <div className="mt-3 flex flex-wrap justify-center gap-2 sm:justify-start">
+                <label className={buttonClass('secondary', 'cursor-pointer px-3 text-xs')}>
+                  <ImagePlus className="size-4" /> Chọn ảnh
+                  <input
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    className="sr-only"
+                    disabled={isSaving}
+                    aria-label="Chọn ảnh đại diện"
+                    onChange={(event) => {
+                      handleAvatarChange(event.target.files?.[0])
+                      event.target.value = ''
+                    }}
+                  />
+                </label>
+                {(avatarFile || (!avatarRemoved && player?.avatarPath)) && (
+                  <Button
+                    variant="ghost"
+                    className="px-3 text-xs text-red-300"
+                    onClick={handleRemoveAvatar}
+                    disabled={isSaving}
+                  >
+                    <Trash2 className="size-4" /> Xóa ảnh
+                  </Button>
+                )}
+              </div>
+              {avatarError && <p className="mt-2 text-xs text-red-300">{avatarError}</p>}
+            </div>
+          </section>
 
           <div className="grid gap-4 sm:grid-cols-2">
             <label className="sm:col-span-2">

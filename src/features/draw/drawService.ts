@@ -3,6 +3,7 @@ import type { BalanceResult } from '../../algorithms/balanceTeams'
 import { requireSupabase } from '../../lib/supabaseClient'
 import type { Database, Json } from '../../types/database'
 import type { PublishedAssignment, PublishedDraw } from '../../types/draw'
+import { getPlayerAvatarUrl } from '../players/playerAvatar'
 import {
   POSITION_GROUPS,
   POSITIONS,
@@ -56,6 +57,8 @@ function toSnapshotPlayer(assignment: PublishedAssignment): Player {
     secondaryPositions: assignment.secondaryPositions,
     positionGroup: POSITION_GROUPS[assignment.position],
     isActive: true,
+    avatarPath: assignment.avatarPath,
+    avatarUrl: getPlayerAvatarUrl(assignment.avatarPath),
   }
 }
 
@@ -84,6 +87,7 @@ function mapAssignment(row: AssignmentRow): PublishedAssignment {
     seed: row.seed_snapshot as Seed,
     position,
     secondaryPositions,
+    avatarPath: row.avatar_path_snapshot ?? undefined,
   }
 }
 

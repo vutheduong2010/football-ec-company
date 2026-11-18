@@ -44,6 +44,7 @@ const assignments: AssignmentRow[] = balanced.assignments.map((assignment) => {
     seed_snapshot: player.seed,
     position_snapshot: player.primaryPosition,
     secondary_positions_snapshot: player.secondaryPositions,
+    avatar_path_snapshot: player.avatarPath ?? null,
   }
 })
 

@@ -22,6 +22,7 @@ Frontend là ứng dụng React tĩnh trên GitHub Pages. Supabase cung cấp Po
 - Chia sẻ liên kết và xuất PNG sắc nét.
 - Một admin trong allow-list; viewer không cần đăng nhập và chỉ có quyền đọc.
 - Viewer có thể mở tab Chia đội ở chế độ chỉ xem và theo dõi trực tiếp thao tác điểm danh, tạo phương án, vòng quay của admin qua Supabase Realtime.
+- Admin có thể tải ảnh đại diện JPG/PNG/WebP tối đa 5 MB cho cầu thủ; ảnh được thu nhỏ tối đa 512 px, nén WebP trước khi tải lên và lazy-load khi hiển thị. Hồ sơ không có ảnh hoặc ảnh lỗi tự động dùng avatar mặc định.
 
 ## Chạy local
 

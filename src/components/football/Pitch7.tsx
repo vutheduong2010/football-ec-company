@@ -49,7 +49,10 @@ export function Pitch7({
           data-lineup-drag-player-id={player.id}
           data-lineup-drop-player-id={player.id}
         >
-          <PlayerAvatar className={`mx-auto size-9 rounded-full shadow-lg ring-4 ${accent}`} />
+          <PlayerAvatar
+            src={player.avatarUrl}
+            className={`mx-auto size-9 rounded-full shadow-lg ring-4 ${accent}`}
+          />
           <span className="mt-1 block truncate rounded-md bg-ink-950/80 px-1.5 py-0.5 text-[9px] font-black text-white backdrop-blur-sm">
             {getPlayerDisplayName(player)}
           </span>

@@ -2,14 +2,14 @@ import { useCallback, useEffect, useState } from 'react'
 
 import { mockPlayers } from '../data/mockData'
 import {
-  createPlayer as createPlayerRequest,
+  createPlayerWithAvatar as createPlayerRequest,
   deletePlayerPermanently as deletePlayerRequest,
   listPlayers,
   setPlayerActive as setPlayerActiveRequest,
-  updatePlayer as updatePlayerRequest,
+  updatePlayerWithAvatar as updatePlayerRequest,
 } from '../features/players/playerService'
 import { isSupabaseConfigured } from '../lib/supabaseClient'
-import type { Player, PlayerInput } from '../types/player'
+import type { Player, PlayerAvatarUpdate, PlayerInput } from '../types/player'
 
 function getErrorMessage(error: unknown) {
   return error instanceof Error ? error.message : 'Đã có lỗi không xác định.'
@@ -74,8 +74,8 @@ export function usePlayers() {
   }, [])
 
   const createPlayer = useCallback(
-    async (input: PlayerInput) => {
-      const player = await mutate(() => createPlayerRequest(input))
+    async (input: PlayerInput, avatar: PlayerAvatarUpdate) => {
+      const player = await mutate(() => createPlayerRequest(input, avatar.file))
       setPlayers((current) =>
         [...current, player].sort((a, b) => a.name.localeCompare(b.name, 'vi')),
       )
@@ -85,12 +85,15 @@ export function usePlayers() {
   )
 
   const updatePlayer = useCallback(
-    async (id: string, input: PlayerInput) => {
-      const player = await mutate(() => updatePlayerRequest(id, input))
+    async (id: string, input: PlayerInput, avatar: PlayerAvatarUpdate) => {
+      const currentPlayer = players.find((player) => player.id === id)
+      const player = await mutate(() =>
+        updatePlayerRequest(id, input, currentPlayer?.avatarPath, avatar.file, avatar.remove),
+      )
       setPlayers((current) => current.map((item) => (item.id === id ? player : item)))
       return player
     },
-    [mutate],
+    [mutate, players],
   )
 
   const setPlayerActive = useCallback(
@@ -104,10 +107,11 @@ export function usePlayers() {
 
   const deletePlayerPermanently = useCallback(
     async (id: string) => {
-      await mutate(() => deletePlayerRequest(id))
+      const currentPlayer = players.find((player) => player.id === id)
+      await mutate(() => deletePlayerRequest(id, currentPlayer?.avatarPath))
       setPlayers((current) => current.filter((item) => item.id !== id))
     },
-    [mutate],
+    [mutate, players],
   )
 
   return {

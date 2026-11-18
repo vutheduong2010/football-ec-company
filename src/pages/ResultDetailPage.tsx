@@ -408,7 +408,10 @@ export function ResultDetailPage() {
                 : 'border-white/20 bg-ink-950/95'
             }`}
           >
-            <PlayerAvatar className="size-10 rounded-xl ring-2 ring-white/15" />
+            <PlayerAvatar
+              src={draggedPlayer.avatarUrl}
+              className="size-10 rounded-xl ring-2 ring-white/15"
+            />
             <div className="min-w-0">
               <p className="max-w-40 truncate text-xs font-black text-white">
                 {getPlayerDisplayName(draggedPlayer)}

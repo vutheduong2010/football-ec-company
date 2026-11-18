@@ -74,7 +74,10 @@ export function TeamPanel({
                 enablePlayerSwap ? `Kéo ${getPlayerDisplayName(player)} để đổi vị trí` : undefined
               }
             >
-              <PlayerAvatar className="size-8 rounded-lg ring-1 ring-white/10" />
+              <PlayerAvatar
+                src={player.avatarUrl}
+                className="size-8 rounded-lg ring-1 ring-white/10"
+              />
             </span>
             <span className="min-w-0 flex-1 truncate text-xs font-bold text-slate-200">
               {getPlayerDisplayName(player)}

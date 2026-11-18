@@ -24,6 +24,8 @@ export interface Player {
   secondaryPositions: Position[]
   positionGroup: PositionGroup
   isActive: boolean
+  avatarPath?: string
+  avatarUrl?: string
 }
 
 export interface PlayerInput {
@@ -33,4 +35,9 @@ export interface PlayerInput {
   primaryPosition: Position
   secondaryPositions: Position[]
   isActive: boolean
+}
+
+export interface PlayerAvatarUpdate {
+  file: File | null
+  remove: boolean
 }

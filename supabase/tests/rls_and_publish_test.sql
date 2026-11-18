@@ -1,7 +1,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(41);
+select plan(46);
 
 insert into auth.users (
   id,
@@ -160,6 +160,28 @@ select is(
   true,
   'RLS is enabled for live_draw_state'
 );
+select ok(
+  exists (
+    select 1
+    from storage.buckets
+    where id = 'player-avatars'
+      and public
+      and file_size_limit = 5242880
+      and allowed_mime_types @> array['image/jpeg', 'image/png', 'image/webp']::text[]
+  ),
+  'player avatar bucket is public with image type and size restrictions'
+);
+select is(
+  (
+    select count(*)
+    from pg_policies
+    where schemaname = 'storage'
+      and tablename = 'objects'
+      and policyname like 'player_avatars_admin_%'
+  ),
+  3::bigint,
+  'player avatar storage has admin-only select, insert and delete policies'
+);
 
 set local role anon;
 select set_config('request.jwt.claims', '{"role":"anon"}', true);
@@ -267,6 +289,20 @@ select lives_ok(
   'admin can insert players'
 );
 select lives_ok(
+  $$update public.players
+    set avatar_path = '10000000-0000-4000-8000-000000000002/50000000-0000-4000-8000-000000000001.webp'
+    where id = '10000000-0000-4000-8000-000000000002'$$,
+  'admin can set a valid player avatar path'
+);
+select throws_ok(
+  $$update public.players
+    set avatar_path = '10000000-0000-4000-8000-000000000002/50000000-0000-4000-8000-000000000001.webp'
+    where id = '10000000-0000-4000-8000-000000000001'$$,
+  '23514',
+  null,
+  'avatar path must belong to the player folder'
+);
+select lives_ok(
   $$update public.live_draw_state
     set state = '{
       "version":1,
@@ -365,6 +401,18 @@ select is(
   ),
   array['CM']::text[],
   'publish snapshots secondary positions for deterministic lineup placement'
+);
+select is(
+  (
+    select avatar_path_snapshot
+    from public.draw_assignments
+    where player_id = '10000000-0000-4000-8000-000000000002'
+      and session_id <> '20000000-0000-4000-8000-000000000002'
+    order by id desc
+    limit 1
+  ),
+  '10000000-0000-4000-8000-000000000002/50000000-0000-4000-8000-000000000001.webp',
+  'publish snapshots the player avatar path'
 );
 select lives_ok(
   $$select public.set_published_draw_result(

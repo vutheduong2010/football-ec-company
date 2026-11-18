@@ -1,10 +1,21 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { describe, expect, it, vi } from 'vitest'
+import { beforeAll, describe, expect, it, vi } from 'vitest'
 
 import { PlayerFormDialog } from './PlayerFormDialog'
 
 describe('PlayerFormDialog', () => {
+  beforeAll(() => {
+    Object.defineProperty(URL, 'createObjectURL', {
+      configurable: true,
+      value: vi.fn(() => 'blob:avatar-preview'),
+    })
+    Object.defineProperty(URL, 'revokeObjectURL', {
+      configurable: true,
+      value: vi.fn(),
+    })
+  })
+
   it('hiển thị ba hạt giống và đúng sáu vị trí mới', () => {
     render(
       <PlayerFormDialog open player={null} isSaving={false} onClose={vi.fn()} onSubmit={vi.fn()} />,
@@ -42,5 +53,34 @@ describe('PlayerFormDialog', () => {
 
     await user.click(screen.getByRole('button', { name: 'LB' }))
     expect(screen.getByRole('button', { name: 'RB' })).toBeEnabled()
+  })
+
+  it('xem trước và gửi ảnh đại diện hợp lệ cùng hồ sơ cầu thủ', async () => {
+    const user = userEvent.setup()
+    const onSubmit = vi.fn().mockResolvedValue(undefined)
+    render(
+      <PlayerFormDialog
+        open
+        player={null}
+        isSaving={false}
+        onClose={vi.fn()}
+        onSubmit={onSubmit}
+      />,
+    )
+    const file = new File(['avatar'], 'avatar.png', { type: 'image/png' })
+
+    await user.upload(screen.getByLabelText('Chọn ảnh đại diện'), file)
+    await user.type(screen.getByLabelText('Tên cầu thủ *'), 'Cầu thủ ảnh mới')
+    expect(screen.getByAltText('Ảnh đại diện cầu thủ')).toHaveAttribute(
+      'src',
+      'blob:avatar-preview',
+    )
+
+    await user.click(screen.getByRole('button', { name: 'Lưu cầu thủ' }))
+
+    expect(onSubmit).toHaveBeenCalledWith(expect.objectContaining({ name: 'Cầu thủ ảnh mới' }), {
+      file,
+      remove: false,
+    })
   })
 })

@@ -142,6 +142,7 @@ export function HomePage() {
                       {team.players.slice(0, 5).map((player) => (
                         <PlayerAvatar
                           key={player.id}
+                          src={player.avatarUrl}
                           alt={`Ảnh đại diện ${getPlayerDisplayName(player)}`}
                           title={getPlayerDisplayName(player)}
                           className="size-9 rounded-full border-2 border-panel"

@@ -12,6 +12,7 @@ export interface PublishedAssignment {
   seed: Seed
   position: Player['primaryPosition']
   secondaryPositions: Player['secondaryPositions']
+  avatarPath?: string
 }
 
 export interface PublishedTeam {

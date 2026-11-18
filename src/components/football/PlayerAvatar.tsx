@@ -21,6 +21,8 @@ export function PlayerAvatar({
       src={resolvedSrc}
       alt={alt}
       title={title}
+      loading="lazy"
+      decoding="async"
       onError={() => src && setFailedSrc(src)}
       className={`shrink-0 object-cover ${className}`}
     />

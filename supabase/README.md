@@ -71,6 +71,8 @@ Migration `202611150004_post_match_results.sql` bổ sung tỉ số cho trận h
 
 Migration `202611150005_live_draw_room.sql` tạo trạng thái chia đội trực tiếp dạng singleton, cho viewer đọc/subscribe qua Supabase Realtime và chỉ cho admin cập nhật.
 
+Migration `202611180001_player_avatars.sql` thêm đường dẫn avatar cho cầu thủ và snapshot kết quả, đồng thời tạo bucket public `player-avatars` giới hạn 5 MB với quyền upload/xóa chỉ dành cho admin.
+
 RLS là lớp bảo mật thật. `isAdmin` trong React chỉ dùng để điều chỉnh UX.
 
 ## 6. Kiểm tra trước khi dùng production

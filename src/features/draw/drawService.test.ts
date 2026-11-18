@@ -71,6 +71,7 @@ describe('drawService', () => {
       seed_snapshot: player.seed,
       position_snapshot: player.primaryPosition,
       secondary_positions_snapshot: index === 0 ? ['CB'] : player.secondaryPositions,
+      avatar_path_snapshot: null,
     }))
 
     const draw = buildPublishedDraw(makeSession(), rows)

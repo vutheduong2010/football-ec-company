@@ -21,7 +21,7 @@ import { StatusState } from '../components/ui/StatusState'
 import { PlayerFormDialog } from '../features/players/PlayerFormDialog'
 import { useAuth } from '../hooks/useAuth'
 import { usePlayers } from '../hooks/usePlayers'
-import type { Player, PlayerInput, PositionGroup } from '../types/player'
+import type { Player, PlayerAvatarUpdate, PlayerInput, PositionGroup } from '../types/player'
 
 type SeedFilter = 'all' | '1' | '2' | '3'
 type GroupFilter = 'all' | PositionGroup
@@ -81,12 +81,12 @@ export function PlayersPage() {
     setSuccess(null)
   }
 
-  const handleSubmit = async (input: PlayerInput) => {
+  const handleSubmit = async (input: PlayerInput, avatar: PlayerAvatarUpdate) => {
     if (editingPlayer) {
-      await updatePlayer(editingPlayer.id, input)
+      await updatePlayer(editingPlayer.id, input, avatar)
       setSuccess(`Đã cập nhật ${input.name.trim()}.`)
     } else {
-      await createPlayer(input)
+      await createPlayer(input, avatar)
       setSuccess(`Đã thêm ${input.name.trim()}.`)
     }
     setDialogOpen(false)
